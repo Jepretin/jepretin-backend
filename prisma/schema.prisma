@@ -1,0 +1,626 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ENUM
+
+enum UserRole {
+  CUSTOMER
+  PROVIDER
+  ADMIN
+}
+
+enum ProviderStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
+enum OrderStatus {
+  PENDING
+  PAID
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+  EXPIRED
+  REFUNDED
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCESS
+  FAILED
+  REFUNDED
+}
+
+enum NotificationType {
+  ORDER_STATUS
+  PAYMENT
+  SYSTEM
+  PROMO
+  GREETING
+}
+
+enum WalletTransactionType {
+  CREDIT
+  DEBIT
+  PENDING
+  REFUND
+  WITHDRAW
+}
+
+enum WalletTransactionStatus {
+  PENDING
+  SUCCESS
+  FAILED
+}
+
+enum WithdrawalStatus {
+  PENDING
+  PROCESSING
+  APPROVED
+  PAID
+  REJECTED
+}
+
+// MODELS
+
+// Users
+model User {
+  id         String   @id @default(uuid())
+  name       String
+  email      String   @unique
+  password   String
+  role       UserRole @default(CUSTOMER)
+  phone      String
+  avatar     String?
+  isActive   Boolean  @default(true)
+  isVerified Boolean  @default(false)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  // Relasi
+  providers      Provider?
+  orders         Order[]
+  reviews        Review[]
+  otpTokens      OtpToken[]
+  passwordResets PasswordReset[]
+  refreshTokens  UserRefreshToken[]
+  notifications  Notification[]
+  likes          Like[]
+}
+
+// Tabel Provider
+model Provider {
+  id                String         @id @default(uuid())
+  userId            String @unique
+  status            ProviderStatus @default(PENDING)
+  experience        String?
+  bankName          String?
+  bankAccountNumber String?
+  bankAccountName   String?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  // Relasi
+  user               User                   @relation(fields: [userId], references: [id])
+  roles              ProviderRole[]
+  coverages          ProviderCoverage[]
+  availabilities     ProviderAvailability[]
+  portfolios         ProviderPortfolio[]
+  bundles            ProviderBundle[]
+  toppings           ProviderTopping[]
+  orders             Order[]
+  reviews            Review[]
+  wallet             Wallet? // back relation to wallet (one-to-one)
+  withdrawalRequests WithdrawalRequest[]
+
+  @@index([userId])
+}
+
+// Tabel Role master
+model Role {
+  id        String    @id @default(uuid())
+  name      String    @unique
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  providerRoles ProviderRole[]
+}
+
+// Tabel Role Provider
+model ProviderRole {
+  id         String @id @default(uuid())
+  providerId String
+  roleId     String
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  // Relasi
+  provider Provider @relation(fields: [providerId], references: [id])
+  role     Role     @relation(fields: [roleId], references: [id])
+
+  @@unique([providerId, roleId])
+  @@index([providerId])
+  @@index([roleId])
+}
+
+// Tabel Daerah
+model Province {
+  id        String    @id
+  name      String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  regencies Regency[]
+}
+
+model Regency {
+  id         String    @id
+  provinceId String
+  name       String
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  deletedAt  DateTime?
+
+  // Relasi
+  province  Province   @relation(fields: [provinceId], references: [id])
+  districts District[]
+
+  @@index([provinceId])
+}
+
+model District {
+  id        String    @id
+  regencyId String
+  name      String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  // Relasi
+  regency   Regency            @relation(fields: [regencyId], references: [id])
+  coverages ProviderCoverage[]
+  orders    Order[]
+
+  @@index([regencyId])
+}
+
+// Tabel Provider Coverage
+model ProviderCoverage {
+  id         String @id @default(uuid())
+  providerId String
+  districtId String
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  // Relasi
+  provider Provider @relation(fields: [providerId], references: [id])
+  district District @relation(fields: [districtId], references: [id])
+
+  @@unique([providerId, districtId])
+  @@index([providerId])
+  @@index([districtId])
+}
+
+// Tabel Provider availability
+model ProviderAvailability {
+  id          String   @id @default(uuid())
+  providerId  String
+  startDate   DateTime
+  endDate     DateTime
+  isAvailable Boolean  @default(true)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  // Relasi
+  provider Provider @relation(fields: [providerId], references: [id])
+
+  @@index([providerId])
+}
+
+// Tabel Provider portfolio
+model ProviderPortfolio {
+  id          String  @id @default(uuid())
+  providerId  String
+  mediaUrl    String
+  description String?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  provider Provider @relation(fields: [providerId], references: [id])
+  likes    Like[]
+
+  @@index([providerId])
+}
+
+// Tabel Bundle
+model ProviderBundle {
+  id          String  @id @default(uuid())
+  providerId  String
+  name        String
+  description String?
+  price       Decimal @db.Decimal(12, 2)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  // Relasi
+  provider   Provider    @relation(fields: [providerId], references: [id])
+  orderItems OrderItem[]
+
+  @@index([providerId])
+}
+
+// Tabel Toppings (add-on)
+model ProviderTopping {
+  id          String  @id @default(uuid())
+  providerId  String
+  name        String
+  description String?
+  price       Decimal @db.Decimal(12, 2)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  // Relasi
+  provider          Provider           @relation(fields: [providerId], references: [id])
+  orderItems        OrderItem[]
+  orderItemToppings OrderItemTopping[]
+
+  @@index([providerId])
+}
+
+// Tabel Orders
+model Order {
+  id            String      @id @default(uuid())
+  userId        String
+  providerId    String
+  districtId    String
+  addressDetail String?
+  eventDateTime DateTime
+  status        OrderStatus @default(PENDING)
+  totalPrice    Decimal     @db.Decimal(12, 2)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  // Relasi
+  user     User     @relation(fields: [userId], references: [id])
+  provider Provider @relation(fields: [providerId], references: [id])
+  district District @relation(fields: [districtId], references: [id])
+
+  orderItems    OrderItem[]
+  payments      Payment[]
+  review        Review?
+  transactions  WalletTransaction[]
+  notifications Notification[]
+
+  @@index([userId])
+  @@index([providerId])
+  @@index([districtId])
+  @@index([status])
+}
+
+// Tabel Order item (bundle atau topping atau both).
+model OrderItem {
+  id        String  @id @default(uuid())
+  orderId   String
+  bundleId  String?
+  toppingId String?
+  price     Decimal @db.Decimal(12, 2)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  // Relasi
+  order    Order?             @relation(fields: [orderId], references: [id])
+  bundle   ProviderBundle?    @relation(fields: [bundleId], references: [id])
+  topping  ProviderTopping?   @relation(fields: [toppingId], references: [id])
+  toppings OrderItemTopping[]
+
+  @@index([orderId])
+  @@index([bundleId])
+  @@index([toppingId])
+}
+
+// Tabel Order Item Topping
+model OrderItemTopping {
+  id          String  @id @default(uuid())
+  orderItemId String
+  toppingId   String
+  price       Decimal @db.Decimal(12, 2)
+  quantity    Int     @default(1)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  // Relasi
+  orderItem OrderItem       @relation(fields: [orderItemId], references: [id])
+  topping   ProviderTopping @relation(fields: [toppingId], references: [id])
+
+  @@index([orderItemId])
+  @@index([toppingId])
+}
+
+// Tabel Payment category master 
+model PaymentCategory {
+  id          String    @id @default(uuid())
+  name        String    @unique
+  description String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+
+  payments Payment[]
+}
+
+// Tabel Payments (Midtrans)
+model Payment {
+  id            String        @id @default(uuid())
+  orderId       String?
+  categoryId    String
+  amount        Decimal       @db.Decimal(12, 2)
+  method        String
+  transactionId String        @unique
+  status        PaymentStatus @default(PENDING)
+  paidAt        DateTime?
+  rawResponse   Json?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  // Relasi
+  order    Order?          @relation(fields: [orderId], references: [id])
+  category PaymentCategory @relation(fields: [categoryId], references: [id])
+
+  @@index([orderId])
+  @@index([categoryId])
+  @@index([status])
+}
+
+// Tabel Reviews
+model Review {
+  id         String  @id @default(uuid())
+  orderId    String  @unique
+  userId     String
+  providerId String
+  rating     Int
+  comment    String?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  // Relasi
+  order    Order    @relation(fields: [orderId], references: [id])
+  user     User     @relation(fields: [userId], references: [id])
+  provider Provider @relation(fields: [providerId], references: [id])
+
+  @@index([userId])
+  @@index([providerId])
+}
+
+// Tabel Wallet
+model Wallet {
+  id             String    @id @default(uuid())
+  providerId     String    @unique
+  currentBalance Decimal   @default(0) @db.Decimal(12, 2)
+  pendingBalance Decimal   @default(0) @db.Decimal(12, 2)
+  currency       String    @default("IDR")
+  lastPayoutAt   DateTime?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  provider           Provider            @relation(fields: [providerId], references: [id])
+  transactions       WalletTransaction[]
+  withdrawalRequests WithdrawalRequest[]
+
+  @@index([providerId])
+}
+
+// Tabel Wallet transaction 
+model WalletTransaction {
+  id                  String                  @id @default(uuid())
+  walletId            String
+  orderId             String?
+  withdrawalRequestId String?
+  amount              Decimal                 @db.Decimal(12, 2)
+  type                WalletTransactionType
+  status              WalletTransactionStatus @default(PENDING)
+  description         String?
+  externalTxId        String?
+  retryCount          Int                     @default(0)
+  lastAttemptAt       DateTime?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  // Relasi
+  wallet            Wallet             @relation(fields: [walletId], references: [id])
+  order             Order?             @relation(fields: [orderId], references: [id])
+  withdrawalRequest WithdrawalRequest? @relation(fields: [withdrawalRequestId], references: [id])
+
+  @@index([walletId])
+  @@index([orderId])
+  @@index([status])
+}
+
+// Tabel Withdrawal requests
+model WithdrawalRequest {
+  id                String           @id @default(uuid())
+  providerId        String
+  walletId          String
+  amount            Decimal          @db.Decimal(12, 2)
+  bankName          String
+  bankAccountNumber String
+  bankAccountName   String
+  status            WithdrawalStatus @default(PENDING)
+  attemptedAt       DateTime?
+  attemptCount      Int              @default(0)
+  note              String?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  // Relasi
+  provider     Provider            @relation(fields: [providerId], references: [id])
+  wallet       Wallet              @relation(fields: [walletId], references: [id])
+  transactions WalletTransaction[]
+
+  @@index([providerId])
+  @@index([walletId])
+  @@index([status])
+}
+
+// Tabel OTP token
+model OtpToken {
+  id              String    @id @default(uuid())
+  userId          String @unique 
+  code            String
+  expiresAt       DateTime
+  isUsed          Boolean   @default(false)
+  requestCount    Int       @default(0)
+  requestResetAt  DateTime?
+  lastRequestedAt DateTime?
+  userAgent       String?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  // Relasi
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+}
+
+// Tabel Password reset
+model PasswordReset {
+  id         String @id @default(uuid())
+  userId     String
+  resetToken String @unique
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  // Relasi
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+}
+
+// Tabel Refresh token
+model UserRefreshToken {
+  id        String    @id @default(uuid())
+  userId    String
+  token     String
+  expiredAt DateTime
+  revokedAt DateTime?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  // Relasi
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+}
+
+//Tabel blacklist token
+model TokenBlacklist {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  expiredAt DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deletedAt DateTime?
+}
+
+// Tabel Notification templates
+model NotificationTemplate {
+  id      String           @id @default(uuid())
+  title   String
+  type    NotificationType
+  message String           @db.VarChar(255)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  notifications Notification[]
+}
+
+// Tabel Notifications
+model Notification {
+  id         String           @id @default(uuid())
+  userId     String
+  templateId String?
+  orderId    String?
+  type       NotificationType
+  message    String           @db.VarChar(255)
+  isRead     Boolean          @default(false)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  // Relasi
+  user     User                  @relation(fields: [userId], references: [id])
+  template NotificationTemplate? @relation(fields: [templateId], references: [id])
+  order    Order?                @relation(fields: [orderId], references: [id])
+
+  @@index([userId])
+  @@index([templateId])
+  @@index([orderId])
+}
+
+// Tabel Likes
+model Like {
+  id          String @id @default(uuid())
+  userId      String
+  portfolioId String
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  // Relasi
+  user      User              @relation(fields: [userId], references: [id])
+  portfolio ProviderPortfolio @relation(fields: [portfolioId], references: [id])
+
+  @@unique([userId, portfolioId])
+  @@index([userId])
+  @@index([portfolioId])
+}
