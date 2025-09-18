@@ -18,7 +18,9 @@ class OtpController {
         },
       });
     } catch (err) {
-      return error(res, 400, "Gagal verifikasi OTP.", { detail: err.message });
+      const status = err.statusCode || 500;
+      const message = err.statusCode ? err.message : "Gagal verifikasi OTP";
+      return error(res, status, message, { detail: err.message });
     }
   }
 
@@ -30,14 +32,12 @@ class OtpController {
       const { otpRecord } = await OtpService.resendOtp({ email, userAgent });
 
       return success(res, 200, "Kode OTP baru telah dikirim.", {
-        last_requested_at: otpRecord.lastRequestedAt,
-        request_reset_at: otpRecord.requestResetAt,
-        user_agent: otpRecord.userAgent, // tampilkan juga di response
+        next_request_available_at: otpRecord.requestResetAt,
       });
     } catch (err) {
-      return error(res, 400, "Gagal mengirim ulang OTP.", {
-        detail: err.message,
-      });
+      const status = err.statusCode || 500;
+      const message = err.statusCode ? err.message : "Gagal mengirim ulang OTP";
+      return error(res, status, message, { detail: err.message });
     }
   }
 }

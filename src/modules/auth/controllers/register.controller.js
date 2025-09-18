@@ -5,7 +5,7 @@ const { success, error } = require("../../../utils/response");
 class RegisterController {
   static async register(req, res) {
     const { name, email, password, phone } = req.body;
-    const userAgent = req.headers["user-agent"] || "Unknown"; // 🔹 Tambahkan ini
+    const userAgent = req.headers["user-agent"] || "Unknown";
 
     try {
       const { newUser, otpRecord } = await RegisterService.register({
@@ -13,7 +13,7 @@ class RegisterController {
         email,
         password,
         phone,
-        userAgent, // 🔹 lempar ke service
+        userAgent,
       });
 
       return success(
@@ -26,18 +26,13 @@ class RegisterController {
             email: newUser.email,
             name: newUser.name,
           },
-          otp: {
-            request_reset_at: otpRecord.requestResetAt,
-            last_requested_at: otpRecord.lastRequestedAt,
-            user_agent: otpRecord.userAgent, // 🔹 tampilkan untuk debug
-          },
         }
       );
     } catch (err) {
       console.error("Error pada registrasi:", err);
-      return error(res, 500, "Gagal mendaftarkan user.", {
-        detail: err.message,
-      });
+      const status = err.statusCode || 500;
+      const message = err.statusCode ? err.message : "Gagal mendaftarkan user.";
+      return error(res, status, message, { detail: err.message });
     }
   }
 }

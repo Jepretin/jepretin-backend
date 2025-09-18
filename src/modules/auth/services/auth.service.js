@@ -4,6 +4,7 @@ const { totp } = require("otplib"); // Import otplib
 const { PrismaClient } = require("@prisma/client");
 const prisma = require("../../../services/prisma.service");
 const { error } = require("../../../utils/response");
+const appError = require("../../../utils/appError");
 const SECRET_KEY = process.env.JWT_SECRET;
 
 class AuthService {
@@ -13,19 +14,20 @@ class AuthService {
     });
 
     if (!user) {
-      throw new Error("Email atau password salah");
+      throw new appError("Email atau password salah", 401);
     }
 
     if (!user.isVerified) {
-      throw new Error(
-        "Akun belum terverifikasi, silahkan verifikasi dengan OTP terlebih dahulu."
+      throw new appError(
+        "Akun belum terverifikasi, silahkan verifikasi dengan OTP terlebih dahulu.",
+        403
       );
     }
 
     const isPasswordValid = await bcrypt.compare(password, user.password);
     {
       if (!isPasswordValid) {
-        throw new Error("Email atau password salah");
+        throw new appError("Email atau password salah", 401);
       }
     }
     const token = jwt.sign(
@@ -62,9 +64,11 @@ class AuthService {
         },
       });
 
-      return { success: true };
+      return {
+        message: "Token telah di-blacklist. ",
+      };
     } catch (err) {
-      throw new Error("Logout gagal: " + err.message);
+      throw new appError("Token tidak valid atau sudah kadaluarsa.", 401);
     }
   }
 }

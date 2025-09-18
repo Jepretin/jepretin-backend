@@ -8,25 +8,25 @@ class AuthController {
       const result = await AuthService.login({ email, password });
       return success(res, 200, "Login berhasil.", result);
     } catch (err) {
-      return error(res, 400, "Gagal login", { detail: err.message });
+      const status = err.statusCode || 500;
+      const message = err.statusCode ? err.message : "Gagal login";
+      return error(res, status, message, { detail: err.message });
     }
   }
 
   static async logout(req, res) {
     const token = req.headers.authorization?.split(" ")[1];
     if (!token) {
-      return res
-        .status(400)
-        .json({ message: "Token diperlukan untuk logout." });
+      return error(res, 400, "Token diperlukan untuk logout.");
     }
 
     try {
-      await AuthService.logout(token);
-      return res
-        .status(200)
-        .json({ message: "Logout berhasil. Token di-blacklist." });
+      const result = await AuthService.logout(token);
+      return success(res, 200, "Logout berhasil.", result);
     } catch (err) {
-      return res.status(500).json({ message: err.message });
+      const status = err.statusCode || 500;
+      const message = err.statusCode ? err.message : "Gagal logout.";
+      return error(res, status, message, { message: err.message });
     }
   }
 }

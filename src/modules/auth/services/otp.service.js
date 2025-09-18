@@ -3,6 +3,7 @@ const bcrypt = require("bcrypt");
 const { totp } = require("otplib");
 const prisma = require("../../../services/prisma.service");
 const MailerService = require("../../mailer/mailer.service");
+const AppError = require("../../../utils/appError");
 
 totp.options = { step: 60 }; // OTP berlaku 60 detik
 
@@ -20,9 +21,9 @@ class OtpService {
       data: {
         userId,
         code: hashedOtp,
-        expiresAt: new Date(Date.now() + 60 * 1000),
+        expiresAt: new Date(Date.now() + 60000), // 60000 = 1 menit
         requestCount: 1,
-        requestResetAt: new Date(Date.now() + 60 * 1000),
+        requestResetAt: new Date(Date.now() + 60000), // 60000 = 1 menit
         lastRequestedAt: new Date(),
         userAgent: userAgent || null,
       },
@@ -34,8 +35,9 @@ class OtpService {
 
   static async verifyOtp({ email, otpCode }) {
     const user = await prisma.user.findUnique({ where: { email } });
-    if (!user) throw new Error("User tidak ditemukan.");
-
+    if (!user) {
+      throw new AppError("User tidak ditemukan.", 404);
+    }
     const userId = user.id;
 
     const otpRecord = await prisma.otpToken.findFirst({
@@ -43,12 +45,13 @@ class OtpService {
     });
 
     if (!otpRecord || otpRecord.expiresAt < new Date()) {
-      throw new Error("Kode OTP tidak valid atau telah kedaluwarsa.");
+      throw new AppError("Kode OTP tidak valid atau telah kedaluwarsa.", 401);
     }
 
     const isValidOtp = await bcrypt.compare(otpCode, otpRecord.code);
-    if (!isValidOtp) throw new Error("Kode OTP salah.");
-
+    if (!isValidOtp) {
+      throw new AppError("Kode OTP salah.", 400);
+    }
     await prisma.otpToken.update({
       where: { id: otpRecord.id },
       data: { isUsed: true },
@@ -73,8 +76,9 @@ class OtpService {
 
   static async resendOtp({ email, userAgent }) {
     const user = await prisma.user.findUnique({ where: { email } });
-    if (!user) throw new Error("User tidak ditemukan.");
-
+    if (!user) {
+      throw new AppError("User tidak ditemukan.", 404);
+    }
     const existingOtp = await prisma.otpToken.findFirst({
       where: { userId: user.id, isUsed: false },
     });
@@ -87,7 +91,7 @@ class OtpService {
         existingOtp.requestResetAt &&
         existingOtp.requestResetAt > new Date()
       ) {
-        throw new Error("Silakan tunggu sebelum meminta OTP lagi.");
+        throw new AppError("Silakan tunggu sebelum meminta OTP lagi.", 429);
       }
 
       if (existingOtp.requestCount >= 5) {

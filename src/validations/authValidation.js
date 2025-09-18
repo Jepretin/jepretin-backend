@@ -27,9 +27,13 @@ const resetPasswordSchema = Joi.object({
   token: Joi.string().required().messages({
     "any.required": "Token reset password wajib ada",
   }),
-  newPassword: Joi.string().min(6).required().messages({
-    "string.min": "Password baru minimal {#limit} karakter",
-    "any.required": "Password baru wajib diisi",
+  password: Joi.string().min(6).required().messages({
+    "string.min": "Password minimal {#limit} karakter",
+    "any.required": "Password wajib diisi",
+  }),
+  confirmPassword: Joi.string().valid(Joi.ref("password")).required().messages({
+    "any.only": "Konfirmasi password tidak cocok",
+    "any.required": "Konfirmasi password wajib diisi",
   }),
 });
 

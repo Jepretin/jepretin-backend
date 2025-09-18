@@ -11,7 +11,11 @@ class PasswordController {
         token,
       });
     } catch (err) {
-      return error(res, 400, "Gagal mengirim link reset password.", {
+      const status = err.statusCode || 500;
+      const message = err.statusCode
+        ? err.message
+        : "Gagal mengirim link reset password.";
+      return error(res, status, message, {
         detail: err.message,
       });
     }
@@ -23,7 +27,9 @@ class PasswordController {
       await PasswordService.resetPassword({ token, password, confirmPassword });
       return success(res, 200, "Password berhasil direset! Silakan login.");
     } catch (err) {
-      return error(res, 400, "Gagal reset password.", { detail: err.message });
+      const status = err.statusCode || 500;
+      const message = err.statusCode ? err.message : "Gagal reset password";
+      return error(res, status, message, { detail: err.message });
     }
   }
 }

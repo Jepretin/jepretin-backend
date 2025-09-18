@@ -1,9 +1,17 @@
-function success(res, code, message, data = null) {
-  return res.status(code).json({ code, message, data });
+function success(res, code, message, data) {
+  const response = { code, message };
+  if (data !== undefined) {
+    response.data = data;
+  }
+  return res.status(code).json(response);
 }
 
-function error(res, code, message, data = null) {
-  return res.status(code).json({ code, message, data });
+function error(res, code, message, data) {
+  const response = { code, message };
+  if (data !== undefined) {
+    response.data = data;
+  }
+  return res.status(code).json(response);
 }
 
 module.exports = { success, error };

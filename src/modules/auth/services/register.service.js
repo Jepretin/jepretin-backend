@@ -3,6 +3,7 @@ const { totp } = require("otplib");
 const { PrismaClient } = require("@prisma/client");
 const prisma = require("../../../services/prisma.service");
 const MailerService = require("../../mailer/mailer.service");
+const AppError = require("../../../utils/appError");
 const OtpService = require("./otp.service");
 
 totp.options = { step: 60 };
@@ -10,8 +11,9 @@ totp.options = { step: 60 };
 class RegisterService {
   static async register({ name, email, password, phone, userAgent }) {
     const existingUser = await prisma.user.findUnique({ where: { email } });
-    if (existingUser) throw new Error("Email sudah digunakan");
-
+    if (existingUser) {
+      throw new AppError("Email sudah digunakan", 409);
+    }
     const hashedPassword = await bcrypt.hash(password, 10);
 
     let newUser, otpRecord;
