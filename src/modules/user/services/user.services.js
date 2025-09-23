@@ -43,11 +43,21 @@ class UserService {
   }
 
   static async deleteUser(userId) {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      throw new Error("User tidak ditemukan");
+    }
+
     return prisma.user.update({
       where: { id: userId },
       data: {
         deletedAt: new Date(),
         isActive: false,
+
+        email: `${user.email}__deleted_${Date.now()}`,
       },
     });
   }
