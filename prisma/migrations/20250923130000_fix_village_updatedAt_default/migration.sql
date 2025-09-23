@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "public"."Village"
+ALTER COLUMN "updatedAt" SET DEFAULT CURRENT_TIMESTAMP;

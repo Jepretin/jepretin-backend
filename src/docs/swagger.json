@@ -1,0 +1,196 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Auth API",
+    "description": "Dokumentasi API untuk Authentication (Register, Login, OTP, Password Reset)",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:3000/api",
+      "description": "Local server"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    },
+    "schemas": {
+      "Register": {
+        "type": "object",
+        "required": ["name", "email", "password"],
+        "properties": {
+          "name": { "type": "string", "example": "John Doe" },
+          "email": { "type": "string", "example": "johndoe@gmail.com" },
+          "password": { "type": "string", "minLength": 6, "example": "123456" },
+          "phone": { "type": "string", "example": "081234567890" }
+        }
+      },
+      "Login": {
+        "type": "object",
+        "required": ["email", "password"],
+        "properties": {
+          "email": { "type": "string", "example": "johndoe@gmail.com" },
+          "password": { "type": "string", "example": "123456" }
+        }
+      },
+      "ForgotPassword": {
+        "type": "object",
+        "required": ["email"],
+        "properties": {
+          "email": { "type": "string", "example": "johndoe@gmail.com" }
+        }
+      },
+      "ResetPassword": {
+        "type": "object",
+        "required": ["token", "password", "confirmPassword"],
+        "properties": {
+          "token": { "type": "string", "example": "JWT_RESET_TOKEN" },
+          "password": { "type": "string", "example": "newPassword123" },
+          "confirmPassword": { "type": "string", "example": "newPassword123" }
+        }
+      },
+      "VerifyOtp": {
+        "type": "object",
+        "required": ["email", "otp"],
+        "properties": {
+          "email": { "type": "string", "example": "johndoe@gmail.com" },
+          "otp": { "type": "string", "example": "123456" }
+        }
+      },
+      "ResendOtp": {
+        "type": "object",
+        "required": ["email"],
+        "properties": {
+          "email": { "type": "string", "example": "johndoe@gmail.com" }
+        }
+      }
+    }
+  },
+  "paths": {
+    "/auth/register": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Register user baru",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/Register" }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Registrasi berhasil, OTP dikirim ke email" },
+          "409": { "description": "Email sudah digunakan" }
+        }
+      }
+    },
+    "/auth/login": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Login user",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/Login" }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Login berhasil, token JWT dikembalikan" },
+          "401": { "description": "Email atau password salah" }
+        }
+      }
+    },
+    "/auth/logout": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Logout user (Blacklist Token)",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": { "description": "Logout berhasil, token di-blacklist" },
+          "401": { "description": "Token tidak valid atau tidak ada" }
+        }
+      }
+    },
+    "/auth/otp/verify": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Verifikasi OTP",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/VerifyOtp" }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "OTP valid, user terverifikasi" },
+          "400": { "description": "OTP tidak valid atau expired" }
+        }
+      }
+    },
+    "/auth/otp/resend": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Kirim ulang OTP",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ResendOtp" }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "OTP baru berhasil dikirim" }
+        }
+      }
+    },
+    "/auth/forgot-password": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Lupa password - kirim link reset ke email",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ForgotPassword" }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Link reset password dikirim ke email" },
+          "404": { "description": "User tidak ditemukan" }
+        }
+      }
+    },
+    "/auth/reset-password": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Reset password menggunakan token",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ResetPassword" }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Password berhasil direset" },
+          "400": {
+            "description": "Token tidak valid atau password tidak cocok"
+          }
+        }
+      }
+    }
+  }
+}

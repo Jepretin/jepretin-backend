@@ -13,7 +13,7 @@ class AuthService {
       where: { email: email },
     });
 
-    if (!user) {
+    if (!user || !user.isActive || user.deletedAt) {
       throw new appError("Email atau password salah", 401);
     }
 
@@ -32,7 +32,7 @@ class AuthService {
     }
     const token = jwt.sign(
       {
-        user: user.id,
+        id: user.id,
         email: user.email,
         role: user.role,
       },
