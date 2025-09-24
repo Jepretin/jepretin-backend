@@ -1,12 +1,9 @@
-const { PrismaClient } = require("@prisma/client");
 const prisma = require("../../../services/prisma.service");
-const bcrypt = require("bcrypt");
-const appError = require("../../../utils/appError");
+const AppError = require("../../../utils/appError");
 
 class ProviderService {
   static async registerProvider({
     userId,
-    status,
     experience,
     bankName,
     bankAccountNumber,
@@ -17,9 +14,22 @@ class ProviderService {
     });
 
     if (!user || !user.isActive || user.deletedAt || !user.isVerified) {
-      throw new appError("Akun belum terverifikasi", 403);
+      throw new AppError("Akun belum terverifikasi", 403);
     }
-    const newProvider = await prisma.provider.create({
+
+    const existingProvider = await prisma.provider.findFirst({
+      where: {
+        userId,
+        status: "PENDING",
+        deletedAt: null,
+      },
+    });
+
+    if (existingProvider) {
+      throw new AppError("Kamu sudah mendaftar, tunggu proses verifikasi", 400);
+    }
+
+    const provider = await prisma.provider.create({
       data: {
         userId,
         status: "PENDING",
@@ -29,11 +39,15 @@ class ProviderService {
         bankAccountName,
       },
     });
-    return { newProvider };
+
+    return provider;
   }
 
   static async getAllProvider() {
-    return prisma.provider.findMany();
+    const providers = prisma.provider.findMany();
+    if (!providers) {
+      throw new AppError("Tidak ada data Provider", 404);
+    }
   }
 
   static async getProviderById(userId) {
@@ -41,40 +55,62 @@ class ProviderService {
       where: { userId },
     });
     if (!provider) {
-      throw new appError("Provider tidak ditemukan", 404);
+      throw new AppError("Provider tidak ditemukan", 404);
     }
     return provider;
   }
 
   static async updateProvider(userId, data) {
-    const updateData = {
-      status: data.status,
-      experience: data.experience,
-      bankName: data.bankName,
-      bankAccountNumber: data.bankAccountNumber,
-      bankAccountName: data.bankAccountName,
-    };
+    try {
+      const updateData = {};
+      const fields = [
+        "status",
+        "experience",
+        "bankName",
+        "bankAccountNumber",
+        "bankAccountName",
+      ];
 
-    const updatedProvider = await prisma.provider.update({
-      where: { userId },
-      data: updateData,
-    });
+      fields.forEach((field) => {
+        if (data[field] !== undefined) {
+          updateData[field] = data[field];
+        }
+      });
 
-    await prisma.notification.create({
-      data: {
-        userId: updatedProvider.userId,
-        type: "SYSTEM",
-        message: `Perubahan profil Provider berhasil!`,
-        isRead: false,
-      },
-    });
+      if (Object.keys(updateData).length === 0) {
+        throw new AppError("Tidak ada data yang dikirim untuk diperbarui", 400);
+      }
 
-    return updatedProvider;
+      const updatedProvider = await prisma.provider.update({
+        where: { userId },
+        data: updateData,
+      });
+
+      await prisma.notification.create({
+        data: {
+          userId: updatedProvider.userId,
+          type: "SYSTEM",
+          message: "Perubahan profil Provider berhasil!",
+          isRead: false,
+        },
+      });
+
+      return updatedProvider;
+    } catch (error) {
+      throw new AppError("Gagal memperbarui Provider", 500);
+    }
   }
 
-  static async deleteProvider(providerId) {
+  static async deleteProvider(userId) {
+    const provider = await prisma.provider.findUnique({
+      where: { userId },
+    });
+
+    if (!provider) {
+      throw new AppError("Provider tidak ditemukan", 404);
+    }
     return prisma.provider.update({
-      where: { id: providerId },
+      where: { userId },
       data: {
         deletedAt: new Date(),
       },

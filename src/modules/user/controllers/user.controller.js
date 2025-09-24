@@ -1,60 +1,33 @@
 const UserService = require("../services/user.services");
+const { success } = require("../../../utils/response");
+const handleAsync = require("../../../utils/handleAsync");
 
 class UserController {
-  static async getAllUsers(req, res) {
-    try {
-      const users = await UserService.getAllUsers();
-      res.status(200).json({
-        message: "Daftar pengguna berhasil diambil",
-        data: users,
-      });
-    } catch (error) {
-      console.error("Error fetching all users:", error.message);
-      res.status(500).json({ message: "Gagal mengambil daftar pengguna" });
-    }
-  }
+  static getAllUsers = handleAsync(async (req, res) => {
+    const users = await UserService.getAllUsers();
 
-  static async getUserById(req, res) {
-    const userId = req.user.id; // dari payload JWT
-    try {
-      const user = await UserService.getUserById(userId);
-      if (!user) {
-        return res.status(404).json({ message: "Pengguna tidak ditemukan" });
-      }
-      res.status(200).json({
-        message: "Pengguna ditemukan",
-        data: user,
-      });
-    } catch (error) {
-      console.error("Error fetching user by ID:", error.message);
-      res.status(500).json({ message: "Gagal mengambil data pengguna" });
-    }
-  }
+    return success(res, 200, "Daftar User berhasil diambil", users);
+  });
 
-  static async editUser(req, res) {
+  static getUserById = handleAsync(async (req, res) => {
     const userId = req.user.id;
-    try {
-      const updatedUser = await UserService.updateUser(userId, req.body);
-      res.status(200).json({
-        message: "User berhasil diperbarui",
-        data: updatedUser,
-      });
-    } catch (error) {
-      console.error("Error editing user:", error.message);
-      res.status(500).json({ message: "Gagal memperbarui user" });
-    }
-  }
+    const user = await UserService.getUserById(userId);
 
-  static async deleteUser(req, res) {
+    return success(res, 200, "User ditemukan.", user);
+  });
+
+  static editUser = handleAsync(async (req, res) => {
     const userId = req.user.id;
-    try {
-      await UserService.deleteUser(userId);
-      res.status(200).json({ message: "User berhasil dihapus" });
-    } catch (error) {
-      console.error("Error deleting user:", error.message);
-      res.status(500).json({ message: "Gagal menghapus user" });
-    }
-  }
+    const updatedUser = await UserService.updateUser(userId, req.body);
+    return success(res, 200, "User berhasil diperbarui.", updatedUser);
+  });
+
+  static deleteUser = handleAsync(async (req, res) => {
+    const userId = req.user.id;
+    await UserService.deleteUser(userId);
+
+    return success(res, 200, "User berhasil dihapus.");
+  });
 }
 
 module.exports = UserController;

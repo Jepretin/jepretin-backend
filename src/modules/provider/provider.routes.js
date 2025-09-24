@@ -2,7 +2,10 @@ const express = require("express");
 const ProviderController = require("../provider/controllers/provider.controller");
 const authMiddleware = require("../../middlewares/authMiddleware");
 const validate = require("../../middlewares/validate");
-const providerValidation = require("../../validations/providerValidation");
+const {
+  providerValidation,
+  providerUpdateValidation,
+} = require("../../validations/providerValidation");
 const router = express.Router();
 
 // Semua endpoint user harus login dulu
@@ -27,7 +30,7 @@ router.post(
 router.put(
   "/update-provider",
   authMiddleware.authenticate,
-  validate(providerValidation),
+  validate(providerUpdateValidation),
   ProviderController.editProvider
 );
 router.delete(

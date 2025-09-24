@@ -1,8 +1,6 @@
 const bcrypt = require("bcrypt");
 const { totp } = require("otplib");
-const { PrismaClient } = require("@prisma/client");
 const prisma = require("../../../services/prisma.service");
-const MailerService = require("../../mailer/mailer.service");
 const AppError = require("../../../utils/appError");
 const OtpService = require("./otp.service");
 

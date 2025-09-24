@@ -25,5 +25,5 @@ app.use("/api", router);
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log(`✅ Server running at http://localhost:${PORT}`);
+  console.log(`Halo aku di http://localhost:${PORT}`);
 });
