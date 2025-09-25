@@ -1,44 +1,35 @@
-// src/middlewares/authMiddleware.js
 const jwt = require("jsonwebtoken");
 const prisma = require("../services/prisma.service");
 const AppError = require("../utils/appError");
+const handleAsync = require("../utils/handleAsync");
 
 class AuthMiddleware {
-  static async authenticate(req, res, next) {
+  static authenticate = handleAsync(async (req, res, next) => {
     const authHeader = req.headers.authorization;
-    if (!authHeader) return next(new AppError("Token tidak ada", 401));
+    if (!authHeader) throw new AppError("Token tidak ada", 401);
 
     const token = authHeader.split(" ")[1];
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    try {
-      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const blacklisted = await prisma.tokenBlacklist.findUnique({
+      where: { token },
+    });
 
-      // cek blacklist
-      const blacklisted = await prisma.tokenBlacklist.findUnique({
-        where: { token },
-      });
-
-      if (blacklisted) {
-        return next(new AppError("Token sudah tidak berlaku", 401));
-      }
-
-      // simpan payload token di req.user
-      req.user = decoded;
-      next();
-    } catch (err) {
-      return next(new AppError("Token tidak valid", 401));
+    if (blacklisted) {
+      throw new AppError("Token sudah tidak berlaku", 401);
     }
-  }
+
+    req.user = decoded;
+    next();
+  });
 
   static authorize(...roles) {
-    return (req, res, next) => {
+    return handleAsync(async (req, res, next) => {
       if (!req.user || !roles.includes(req.user.role)) {
-        return next(
-          new AppError("Anda tidak memiliki akses ke resource ini", 403)
-        );
+        throw new AppError("Anda tidak memiliki akses ke resource ini", 403);
       }
       next();
-    };
+    });
   }
 }
 
