@@ -35,9 +35,9 @@ model Provider {
   userId             String                 @unique
   status             ProviderStatus         @default(PENDING)
   experience         String?
-  bankName           String?
-  bankAccountNumber  String?
-  bankAccountName    String?
+  // bankName           String?
+  // bankAccountNumber  String?
+  // bankAccountName    String?
   createdAt          DateTime               @default(now())
   updatedAt          DateTime               @updatedAt
   deletedAt          DateTime?

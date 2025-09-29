@@ -1,51 +1,48 @@
 const Joi = require("joi");
 
-const providerValidation = Joi.object({
-  experience: Joi.string().uri().required().messages({
-    "string.base": "Experience harus berupa string",
-    "string.uri":
-      "Experience harus berupa link yang valid (contoh: Google Drive, ImageKit, dll).",
-    "any.required": "Experience wajib diisi",
-  }),
+class ProviderValidation {
+  // Register provider
+  static register() {
+    return Joi.object({
+      experience: Joi.string().uri().required().messages({
+        "string.base": "Experience harus berupa string",
+        "string.uri":
+          "Experience harus berupa link yang valid (contoh: Google Drive, ImageKit, dll).",
+        "any.required": "Experience wajib diisi",
+      }),
+      roles: Joi.array().items(Joi.string().uuid()).min(1).messages({
+        "array.base": "Role harus berupa array",
+        "string.guid": "Role ID harus berupa UUID yang valid",
+        "array.min": "Minimal pilih 1 role",
+      }),
+    });
+  }
 
-  bankName: Joi.string().required().messages({
-    "any.required": "Nama bank wajib diisi",
-  }),
+  // Update hanya experience (dipakai provider jika REJECTED)
+  static updateExperience() {
+    return Joi.object({
+      experience: Joi.string().uri().required().messages({
+        "string.base": "Experience harus berupa string",
+        "string.uri":
+          "Experience harus berupa link yang valid (contoh: Google Drive, ImageKit, dll).",
+        "any.required": "Experience wajib diisi",
+      }),
+    });
+  }
 
-  bankAccountNumber: Joi.string()
-    .pattern(/^\d+$/) // hanya angka
-    .min(6) // minimal 6 digit
-    .required()
-    .messages({
-      "string.pattern.base": "Nomor rekening hanya boleh berisi angka",
-      "string.min": "Nomor rekening minimal 6 digit",
-      "any.required": "Nomor rekening wajib diisi",
-    }),
+  // Update status (khusus admin)
+  static updateStatus() {
+    return Joi.object({
+      status: Joi.string()
+        .valid("PENDING", "ACCEPTED", "REJECTED")
+        .required()
+        .messages({
+          "any.only":
+            "Status tidak valid. Hanya diperbolehkan: PENDING, ACCEPTED, REJECTED",
+          "any.required": "Status wajib diisi",
+        }),
+    });
+  }
+}
 
-  bankAccountName: Joi.string().required().messages({
-    "any.required": "Nama pemilik rekening wajib diisi",
-  }),
-});
-
-const providerUpdateValidation = Joi.object({
-  experience: Joi.string().uri().optional().messages({
-    "string.base": "Experience harus berupa string",
-    "string.uri":
-      "Experience harus berupa link yang valid (contoh: Google Drive, ImageKit, dll).",
-  }),
-
-  bankName: Joi.string().optional().messages({
-    "string.base": "Nama bank harus berupa teks",
-  }),
-
-  bankAccountNumber: Joi.string().pattern(/^\d+$/).min(6).optional().messages({
-    "string.pattern.base": "Nomor rekening hanya boleh berisi angka",
-    "string.min": "Nomor rekening minimal 6 digit",
-  }),
-
-  bankAccountName: Joi.string().optional().messages({
-    "string.base": "Nama pemilik rekening harus berupa teks",
-  }),
-});
-
-module.exports = { providerValidation, providerUpdateValidation };
+module.exports = ProviderValidation;
