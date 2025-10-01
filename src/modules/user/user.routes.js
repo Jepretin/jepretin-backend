@@ -1,6 +1,6 @@
 const express = require("express");
 const UserController = require("../user/controllers/user.controller");
-const AuthValidation = require("../../validations/authValidation");
+const UserValidation = require("./validations/user.validation");
 const authMiddleware = require("../../middlewares/authMiddleware");
 const validate = require("../../middlewares/validate");
 const router = express.Router();
@@ -20,7 +20,7 @@ router.get(
 router.put(
   "/update-user",
   authMiddleware.authenticate,
-  validate(AuthValidation.updateUser),
+  validate(UserValidation.updateUser),
   UserController.editUser
 );
 router.delete(

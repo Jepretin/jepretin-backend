@@ -1,9 +1,10 @@
 const express = require("express");
 const ProviderController = require("../provider/controllers/provider.controller");
 const ProviderRoleController = require("../provider/controllers/providerRole.controller");
+const ProviderCoverageController = require("../provider/controllers/providerCoverage.controller");
 const authMiddleware = require("../../middlewares/authMiddleware");
 const validate = require("../../middlewares/validate");
-const providerValidation = require("../../validations/providerValidation");
+const providerValidation = require("./validations/provider.validation");
 const router = express.Router();
 
 // Provider
@@ -48,7 +49,7 @@ router.delete(
   ProviderController.deleteProvider
 );
 
-//Provder Role
+//Provider Role
 router.post(
   "/assign-role",
   authMiddleware.authenticate,
@@ -65,4 +66,28 @@ router.delete(
   ProviderRoleController.removeRole
 );
 
+//Provider Coverages
+router.post(
+  "/coverage",
+  authMiddleware.authenticate,
+  ProviderCoverageController.addCoverage
+);
+
+router.delete(
+  "/coverage/:districtId",
+  authMiddleware.authenticate,
+  ProviderCoverageController.removeCoverage
+);
+
+router.get(
+  "/coverage",
+  authMiddleware.authenticate,
+  ProviderCoverageController.getProviderCoverage
+);
+
+router.get(
+  "/coverage/:districtId",
+  authMiddleware.authenticate,
+  ProviderCoverageController.findProvidersByDistrict
+);
 module.exports = router;
