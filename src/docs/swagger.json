@@ -69,24 +69,6 @@
           "email": { "type": "string", "example": "johndoe@gmail.com" }
         }
       },
-      "ProviderRegister": {
-        "type": "object",
-        "required": [
-          "experience",
-          "bankName",
-          "bankAccountNumber",
-          "bankAccountName"
-        ],
-        "properties": {
-          "experience": {
-            "type": "string",
-            "example": "5 tahun pengalaman fotografi"
-          },
-          "bankName": { "type": "string", "example": "BCA" },
-          "bankAccountNumber": { "type": "string", "example": "1234567890" },
-          "bankAccountName": { "type": "string", "example": "John Doe" }
-        }
-      },
       "UserUpdate": {
         "type": "object",
         "properties": {
@@ -94,16 +76,67 @@
           "phone": { "type": "string", "example": "081298765432" }
         }
       },
-      "ProviderUpdate": {
+      "ProviderRegister": {
         "type": "object",
+        "required": ["experience", "roles"],
         "properties": {
           "experience": {
             "type": "string",
-            "example": "7 tahun pengalaman fotografi"
+            "format": "uri",
+            "example": "https://drive.google.com/abc123",
+            "description": "Link portofolio atau pengalaman (Google Drive, ImageKit, dll.)"
           },
-          "bankName": { "type": "string", "example": "Mandiri" },
-          "bankAccountNumber": { "type": "string", "example": "9876543210" },
-          "bankAccountName": { "type": "string", "example": "Jane Doe" }
+          "roles": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid",
+              "example": "550e8400-e29b-41d4-a716-446655440000"
+            },
+            "minItems": 1,
+            "example": ["550e8400-e29b-41d4-a716-446655440000"]
+          }
+        }
+      },
+      "ProviderUpdateExperience": {
+        "type": "object",
+        "required": ["experience"],
+        "properties": {
+          "experience": {
+            "type": "string",
+            "format": "uri",
+            "example": "https://drive.google.com/updated-portfolio",
+            "description": "Link portofolio terbaru (Google Drive, ImageKit, dll.)"
+          }
+        }
+      },
+      "ProviderUpdateStatus": {
+        "type": "object",
+        "required": ["status"],
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": ["PENDING", "ACCEPTED", "REJECTED"],
+            "example": "ACCEPTED",
+            "description": "Status provider (khusus ADMIN)"
+          }
+        }
+      },
+      "ProviderResponse": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "experience": { "type": "string", "format": "uri" },
+          "status": {
+            "type": "string",
+            "enum": ["PENDING", "ACCEPTED", "REJECTED"]
+          },
+          "roles": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time" }
         }
       }
     }
@@ -280,16 +313,46 @@
     "/provider/all-provider": {
       "get": {
         "tags": ["Provider"],
-        "summary": "Ambil semua provider",
+        "summary": "Ambil semua provider (Admin only)",
+        "security": [{ "bearerAuth": [] }],
         "responses": {
-          "200": { "description": "Daftar provider berhasil diambil" }
+          "200": {
+            "description": "Daftar provider berhasil diambil",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/ProviderResponse" }
+                }
+              }
+            }
+          },
+          "403": { "description": "Forbidden" }
+        }
+      }
+    },
+    "/provider/get-provider": {
+      "get": {
+        "tags": ["Provider"],
+        "summary": "Ambil data provider milik user login",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Provider ditemukan",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ProviderResponse" }
+              }
+            }
+          },
+          "404": { "description": "Provider tidak ditemukan" }
         }
       }
     },
     "/provider/provider": {
       "post": {
         "tags": ["Provider"],
-        "summary": "Registrasi provider baru",
+        "summary": "Registrasi provider",
         "security": [{ "bearerAuth": [] }],
         "requestBody": {
           "required": true,
@@ -300,55 +363,89 @@
           }
         },
         "responses": {
-          "200": { "description": "Provider berhasil diregistrasi" }
-        }
-      }
-    },
-    "/provider/get-provider": {
-      "get": {
-        "tags": ["Provider"],
-        "summary": "Ambil provider milik user yang sedang login",
-        "security": [{ "bearerAuth": [] }],
-        "responses": {
-          "200": { "description": "Provider ditemukan" }
+          "200": {
+            "description": "Provider berhasil diregistrasi",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ProviderResponse" }
+              }
+            }
+          },
+          "400": { "description": "Bad Request" }
         }
       }
     },
     "/provider/update-provider": {
       "put": {
         "tags": ["Provider"],
-        "summary": "Edit provider milik user yang sedang login",
+        "summary": "Update experience provider milik user login",
         "security": [{ "bearerAuth": [] }],
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
-              "schema": { "$ref": "#/components/schemas/ProviderUpdate" }
+              "schema": {
+                "$ref": "#/components/schemas/ProviderUpdateExperience"
+              }
             }
           }
         },
         "responses": {
-          "200": { "description": "Provider berhasil diperbarui" }
+          "200": {
+            "description": "Experience berhasil diperbarui",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ProviderResponse" }
+              }
+            }
+          },
+          "404": { "description": "Provider tidak ditemukan" }
+        }
+      }
+    },
+    "/provider/update-status/{id}": {
+      "put": {
+        "tags": ["Provider"],
+        "summary": "Update status provider (Admin only)",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ProviderUpdateStatus" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Status provider berhasil diperbarui",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ProviderResponse" }
+              }
+            }
+          },
+          "403": { "description": "Forbidden" },
+          "404": { "description": "Provider tidak ditemukan" }
         }
       }
     },
     "/provider/delete-provider": {
       "delete": {
         "tags": ["Provider"],
-        "summary": "Hapus provider milik user yang sedang login",
+        "summary": "Hapus provider milik user login",
         "security": [{ "bearerAuth": [] }],
         "responses": {
-          "200": { "description": "Provider berhasil dihapus" }
-        }
-      }
-    },
-    "/wilayah/provinces": {
-      "get": {
-        "tags": ["Wilayah"],
-        "summary": "Ambil semua provinsi",
-        "security": [{ "bearerAuth": [] }],
-        "responses": {
-          "200": { "description": "Berhasil mengambil data provinsi" }
+          "200": { "description": "Provider berhasil dihapus" },
+          "404": { "description": "Provider tidak ditemukan" }
         }
       }
     },
