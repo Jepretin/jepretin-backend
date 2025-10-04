@@ -2,9 +2,11 @@ const express = require("express");
 const ProviderController = require("../provider/controllers/provider.controller");
 const ProviderRoleController = require("../provider/controllers/providerRole.controller");
 const ProviderCoverageController = require("../provider/controllers/providerCoverage.controller");
+const ProviderPortofolioController = require("../provider/controllers/providerPortofolio.controller");
 const authMiddleware = require("../../middlewares/authMiddleware");
 const validate = require("../../middlewares/validate");
 const providerValidation = require("./validations/provider.validation");
+const PortofolioValidation = require("./validations/providerPortofolio.validation");
 const router = express.Router();
 
 // Provider
@@ -89,5 +91,19 @@ router.get(
   "/coverage/:districtId",
   authMiddleware.authenticate,
   ProviderCoverageController.findProvidersByDistrict
+);
+
+//Provider Portofolio
+router.post(
+  "/portofolio",
+  authMiddleware.authenticate,
+  validate(PortofolioValidation.createPortofolio),
+  ProviderPortofolioController.addPortofolio
+);
+
+router.get(
+  "/portofolio",
+  authMiddleware.authenticate,
+  ProviderPortofolioController.getAllPortofolio
 );
 module.exports = router;

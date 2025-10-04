@@ -20,38 +20,65 @@ class UserService {
       throw new AppError("User tidak ditemukan", 404);
     }
 
-    return user;
+    return {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      phone: user.phone,
+      avatar: user.avatar,
+    };
   }
 
   static async updateUser(userId, data) {
     try {
-      const updateData = {
-        name: data.name,
-        email: data.email,
-        phone: data.phone,
-        avatar: data.avatar,
-      };
+      // 1. Build update object hanya untuk field yang dikirim
+      const updateData = {};
+
+      if (data.name !== undefined) updateData.name = data.name;
+      if (data.email !== undefined) updateData.email = data.email;
+      if (data.phone !== undefined) updateData.phone = data.phone;
+      if (data.avatar !== undefined) updateData.avatar = data.avatar;
 
       if (data.password) {
         updateData.password = await bcrypt.hash(data.password, 10);
       }
 
+      // 2. Cek apakah ada yang diupdate
+      if (Object.keys(updateData).length === 0) {
+        throw new AppError("Tidak ada data yang diperbarui", 400);
+      }
+
+      // 3. Update user
       const updatedUser = await prisma.user.update({
         where: { id: userId },
         data: updateData,
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          phone: true,
+          avatar: true,
+          // Jangan return password
+        },
       });
 
+      // 4. Create notification
       await prisma.notification.create({
         data: {
           userId: updatedUser.id,
           type: "SYSTEM",
-          message: `Perubahan profil berhasil!`,
+          message: `Profil berhasil diperbarui`,
           isRead: false,
         },
       });
 
+      // 5. Return full user data (tanpa password)
       return updatedUser;
     } catch (error) {
+      if (error.code === "P2002") {
+        throw new AppError("Email sudah digunakan", 409);
+      }
+      if (error instanceof AppError) throw error;
       throw new AppError("Gagal memperbarui User", 500);
     }
   }

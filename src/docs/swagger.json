@@ -18,191 +18,329 @@
         "scheme": "bearer",
         "bearerFormat": "JWT"
       }
-    }
-  },
-  "schemas": {
-    "Register": {
-      "type": "object",
-      "required": ["name", "email", "password"],
-      "properties": {
-        "name": { "type": "string", "example": "John Doe" },
-        "email": { "type": "string", "example": "johndoe@gmail.com" },
-        "password": { "type": "string", "minLength": 6, "example": "123456" },
-        "phone": { "type": "string", "example": "081234567890" }
-      }
     },
-    "Login": {
-      "type": "object",
-      "required": ["email", "password"],
-      "properties": {
-        "email": { "type": "string", "example": "johndoe@gmail.com" },
-        "password": { "type": "string", "example": "123456" }
-      }
-    },
-    "ForgotPassword": {
-      "type": "object",
-      "required": ["email"],
-      "properties": {
-        "email": { "type": "string", "example": "johndoe@gmail.com" }
-      }
-    },
-    "ResetPassword": {
-      "type": "object",
-      "required": ["token", "password", "confirmPassword"],
-      "properties": {
-        "token": { "type": "string", "example": "JWT_RESET_TOKEN" },
-        "password": { "type": "string", "example": "newPassword123" },
-        "confirmPassword": { "type": "string", "example": "newPassword123" }
-      }
-    },
-    "VerifyOtp": {
-      "type": "object",
-      "required": ["email", "otpCode"],
-      "properties": {
-        "email": { "type": "string", "example": "johndoe@gmail.com" },
-        "otpCode": { "type": "string", "example": "123456" }
-      }
-    },
-    "ResendOtp": {
-      "type": "object",
-      "required": ["email"],
-      "properties": {
-        "email": { "type": "string", "example": "johndoe@gmail.com" }
-      }
-    },
-    "UserUpdate": {
-      "type": "object",
-      "properties": {
-        "name": { "type": "string", "example": "Updated Name" },
-        "phone": { "type": "string", "example": "081298765432" }
-      }
-    },
-    "ProviderRegister": {
-      "type": "object",
-      "required": ["experience", "roles"],
-      "properties": {
-        "experience": {
-          "type": "string",
-          "format": "uri",
-          "example": "https://drive.google.com/abc123",
-          "description": "Link portofolio atau pengalaman (Google Drive, ImageKit, dll.)"
-        },
-        "roles": {
-          "type": "array",
-          "items": {
+    "schemas": {
+      "Register": {
+        "type": "object",
+        "required": ["name", "email", "password"],
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "John Doe"
+          },
+          "email": {
+            "type": "string",
+            "example": "johndoe@gmail.com"
+          },
+          "password": {
+            "type": "string",
+            "minLength": 6,
+            "example": "123456"
+          },
+          "phone": {
+            "type": "string",
+            "example": "081234567890"
+          }
+        }
+      },
+      "Login": {
+        "type": "object",
+        "required": ["email", "password"],
+        "properties": {
+          "email": {
+            "type": "string",
+            "example": "johndoe@gmail.com"
+          },
+          "password": {
+            "type": "string",
+            "example": "123456"
+          }
+        }
+      },
+      "ForgotPassword": {
+        "type": "object",
+        "required": ["email"],
+        "properties": {
+          "email": {
+            "type": "string",
+            "example": "johndoe@gmail.com"
+          }
+        }
+      },
+      "ResetPassword": {
+        "type": "object",
+        "required": ["token", "password", "confirmPassword"],
+        "properties": {
+          "token": {
+            "type": "string",
+            "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+          },
+          "password": {
+            "type": "string",
+            "example": "newPassword123"
+          },
+          "confirmPassword": {
+            "type": "string",
+            "example": "newPassword123"
+          }
+        }
+      },
+      "VerifyOtp": {
+        "type": "object",
+        "required": ["email", "otpCode"],
+        "properties": {
+          "email": {
+            "type": "string",
+            "example": "johndoe@gmail.com"
+          },
+          "otpCode": {
+            "type": "string",
+            "example": "123456"
+          }
+        }
+      },
+      "ResendOtp": {
+        "type": "object",
+        "required": ["email"],
+        "properties": {
+          "email": {
+            "type": "string",
+            "example": "johndoe@gmail.com"
+          }
+        }
+      },
+      "UserUpdate": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Updated Name"
+          },
+          "phone": {
+            "type": "string",
+            "example": "081298765432"
+          }
+        }
+      },
+      "ProviderRegister": {
+        "type": "object",
+        "required": ["experience", "roles"],
+        "properties": {
+          "experience": {
+            "type": "string",
+            "format": "uri",
+            "example": "https://drive.google.com/file/d/abc123xyz/view",
+            "description": "Link portofolio atau pengalaman (Google Drive, ImageKit, dll.)"
+          },
+          "roles": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "minItems": 1,
+            "example": [
+              "550e8400-e29b-41d4-a716-446655440000",
+              "660e8400-e29b-41d4-a716-446655440001"
+            ]
+          }
+        }
+      },
+      "ProviderUpdateExperience": {
+        "type": "object",
+        "required": ["experience"],
+        "properties": {
+          "experience": {
+            "type": "string",
+            "format": "uri",
+            "example": "https://drive.google.com/file/d/updated-portfolio-xyz/view",
+            "description": "Link portofolio terbaru (Google Drive, ImageKit, dll.)"
+          }
+        }
+      },
+      "ProviderUpdateStatus": {
+        "type": "object",
+        "required": ["status"],
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": ["PENDING", "ACCEPTED", "REJECTED"],
+            "example": "ACCEPTED",
+            "description": "Status provider (khusus ADMIN)"
+          }
+        }
+      },
+      "Province": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "35"
+          },
+          "name": {
+            "type": "string",
+            "example": "Jawa Timur"
+          }
+        }
+      },
+      "Regency": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "3518"
+          },
+          "name": {
+            "type": "string",
+            "example": "Kota Kediri"
+          },
+          "province": {
+            "$ref": "#/components/schemas/Province"
+          }
+        }
+      },
+      "District": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "3518020"
+          },
+          "name": {
+            "type": "string",
+            "example": "Kecamatan Mojoroto"
+          },
+          "regency": {
+            "$ref": "#/components/schemas/Regency"
+          }
+        }
+      },
+      "Provider": {
+        "type": "object",
+        "properties": {
+          "id": {
             "type": "string",
             "format": "uuid",
-            "example": "550e8400-e29b-41d4-a716-446655440000"
+            "example": "f2a31b90-5e4a-4d1f-8226-9b1f2c7c5678"
           },
-          "minItems": 1,
-          "example": ["550e8400-e29b-41d4-a716-446655440000"]
+          "userId": {
+            "type": "string",
+            "format": "uuid",
+            "example": "a1b2c3d4-5e6f-7g8h-9i0j-k1l2m3n4o5p6"
+          },
+          "experience": {
+            "type": "string",
+            "format": "uri",
+            "example": "https://drive.google.com/file/d/abc123xyz/view"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["PENDING", "ACCEPTED", "REJECTED"],
+            "example": "ACCEPTED"
+          },
+          "roles": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "example": ["Photographer", "Videographer"]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2025-09-27T12:34:56.789Z"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2025-09-27T15:20:10.123Z"
+          }
         }
-      }
-    },
-    "ProviderUpdateExperience": {
-      "type": "object",
-      "required": ["experience"],
-      "properties": {
-        "experience": {
-          "type": "string",
-          "format": "uri",
-          "example": "https://drive.google.com/updated-portfolio",
-          "description": "Link portofolio terbaru (Google Drive, ImageKit, dll.)"
+      },
+      "ProviderResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "example": "f2a31b90-5e4a-4d1f-8226-9b1f2c7c5678"
+          },
+          "experience": {
+            "type": "string",
+            "format": "uri",
+            "example": "https://drive.google.com/file/d/abc123xyz/view"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["PENDING", "ACCEPTED", "REJECTED"],
+            "example": "ACCEPTED"
+          },
+          "roles": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "example": ["Photographer", "Videographer"]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2025-09-27T12:34:56.789Z"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2025-09-27T15:20:10.123Z"
+          }
         }
-      }
-    },
-    "ProviderUpdateStatus": {
-      "type": "object",
-      "required": ["status"],
-      "properties": {
-        "status": {
-          "type": "string",
-          "enum": ["PENDING", "ACCEPTED", "REJECTED"],
-          "example": "ACCEPTED",
-          "description": "Status provider (khusus ADMIN)"
+      },
+      "Coverage": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "example": "c4f1d8f4-7a5a-4b25-9e1f-83d8d8c6eabc"
+          },
+          "districtId": {
+            "type": "string",
+            "example": "3518020"
+          },
+          "userId": {
+            "type": "string",
+            "format": "uuid",
+            "example": "f2a31b90-5e4a-4d1f-8226-9b1f2c7c5678"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2025-09-27T12:34:56.789Z"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2025-09-27T12:34:56.789Z"
+          },
+          "district": {
+            "$ref": "#/components/schemas/District"
+          },
+          "provider": {
+            "$ref": "#/components/schemas/Provider"
+          }
         }
-      }
-    },
-    "ProviderResponse": {
-      "type": "object",
-      "properties": {
-        "id": { "type": "string", "format": "uuid" },
-        "experience": { "type": "string", "format": "uri" },
-        "status": {
-          "type": "string",
-          "enum": ["PENDING", "ACCEPTED", "REJECTED"]
-        },
-        "roles": {
-          "type": "array",
-          "items": { "type": "string" }
-        },
-        "createdAt": { "type": "string", "format": "date-time" },
-        "updatedAt": { "type": "string", "format": "date-time" }
-      }
-    },
-    "Coverage": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "string",
-          "format": "uuid",
-          "example": "c4f1d8f4-7a5a-4b25-9e1f-83d8d8c6eabc"
-        },
-        "districtId": {
-          "type": "string",
-          "example": "3518020"
-        },
-        "userId": {
-          "type": "string",
-          "format": "uuid",
-          "example": "f2a31b90-5e4a-4d1f-8226-9b1f2c7c5678"
-        },
-        "createdAt": {
-          "type": "string",
-          "format": "date-time",
-          "example": "2025-09-27T12:34:56.789Z"
-        },
-        "updatedAt": {
-          "type": "string",
-          "format": "date-time",
-          "example": "2025-09-27T12:34:56.789Z"
-        },
-        "district": {
-          "$ref": "#/components/schemas/District"
-        },
-        "provider": {
-          "$ref": "#/components/schemas/Provider"
+      },
+      "CoverageInput": {
+        "type": "object",
+        "required": ["districtId"],
+        "properties": {
+          "districtId": {
+            "type": "string",
+            "example": "3518020"
+          }
         }
       }
     }
   },
-
-  "District": {
-    "type": "object",
-    "properties": {
-      "id": { "type": "string", "example": "3518020" },
-      "name": { "type": "string", "example": "Kecamatan Mojoroto" },
-      "regency": { "$ref": "#/components/schemas/Regency" }
-    }
-  },
-
-  "Regency": {
-    "type": "object",
-    "properties": {
-      "id": { "type": "string", "example": "3518" },
-      "name": { "type": "string", "example": "Kediri" },
-      "province": { "$ref": "#/components/schemas/Province" }
-    }
-  },
-
-  "Province": {
-    "type": "object",
-    "properties": {
-      "id": { "type": "string", "example": "35" },
-      "name": { "type": "string", "example": "Jawa Timur" }
-    }
-  },
-
   "paths": {
     "/auth/register": {
       "post": {
@@ -212,13 +350,19 @@
           "required": true,
           "content": {
             "application/json": {
-              "schema": { "$ref": "#/components/schemas/Register" }
+              "schema": {
+                "$ref": "#/components/schemas/Register"
+              }
             }
           }
         },
         "responses": {
-          "201": { "description": "Registrasi berhasil, OTP dikirim ke email" },
-          "409": { "description": "Email sudah digunakan" }
+          "201": {
+            "description": "Registrasi berhasil, OTP dikirim ke email"
+          },
+          "409": {
+            "description": "Email sudah digunakan"
+          }
         }
       }
     },
@@ -230,13 +374,19 @@
           "required": true,
           "content": {
             "application/json": {
-              "schema": { "$ref": "#/components/schemas/Login" }
+              "schema": {
+                "$ref": "#/components/schemas/Login"
+              }
             }
           }
         },
         "responses": {
-          "200": { "description": "Login berhasil, token JWT dikembalikan" },
-          "401": { "description": "Email atau password salah" }
+          "200": {
+            "description": "Login berhasil, token JWT dikembalikan"
+          },
+          "401": {
+            "description": "Email atau password salah"
+          }
         }
       }
     },
@@ -244,10 +394,18 @@
       "post": {
         "tags": ["Auth"],
         "summary": "Logout user (Blacklist Token)",
-        "security": [{ "bearerAuth": [] }],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
         "responses": {
-          "200": { "description": "Logout berhasil, token di-blacklist" },
-          "401": { "description": "Token tidak valid atau tidak ada" }
+          "200": {
+            "description": "Logout berhasil, token di-blacklist"
+          },
+          "401": {
+            "description": "Token tidak valid atau tidak ada"
+          }
         }
       }
     },
@@ -259,13 +417,19 @@
           "required": true,
           "content": {
             "application/json": {
-              "schema": { "$ref": "#/components/schemas/VerifyOtp" }
+              "schema": {
+                "$ref": "#/components/schemas/VerifyOtp"
+              }
             }
           }
         },
         "responses": {
-          "200": { "description": "OTP valid, user terverifikasi" },
-          "400": { "description": "OTP tidak valid atau expired" }
+          "200": {
+            "description": "OTP valid, user terverifikasi"
+          },
+          "400": {
+            "description": "OTP tidak valid atau expired"
+          }
         }
       }
     },
@@ -277,12 +441,16 @@
           "required": true,
           "content": {
             "application/json": {
-              "schema": { "$ref": "#/components/schemas/ResendOtp" }
+              "schema": {
+                "$ref": "#/components/schemas/ResendOtp"
+              }
             }
           }
         },
         "responses": {
-          "200": { "description": "OTP baru berhasil dikirim" }
+          "200": {
+            "description": "OTP baru berhasil dikirim"
+          }
         }
       }
     },
@@ -294,13 +462,19 @@
           "required": true,
           "content": {
             "application/json": {
-              "schema": { "$ref": "#/components/schemas/ForgotPassword" }
+              "schema": {
+                "$ref": "#/components/schemas/ForgotPassword"
+              }
             }
           }
         },
         "responses": {
-          "200": { "description": "Link reset password dikirim ke email" },
-          "404": { "description": "User tidak ditemukan" }
+          "200": {
+            "description": "Link reset password dikirim ke email"
+          },
+          "404": {
+            "description": "User tidak ditemukan"
+          }
         }
       }
     },
@@ -312,12 +486,16 @@
           "required": true,
           "content": {
             "application/json": {
-              "schema": { "$ref": "#/components/schemas/ResetPassword" }
+              "schema": {
+                "$ref": "#/components/schemas/ResetPassword"
+              }
             }
           }
         },
         "responses": {
-          "200": { "description": "Password berhasil direset" },
+          "200": {
+            "description": "Password berhasil direset"
+          },
           "400": {
             "description": "Token tidak valid atau password tidak cocok"
           }
@@ -328,9 +506,15 @@
       "get": {
         "tags": ["User"],
         "summary": "Ambil semua user",
-        "security": [{ "bearerAuth": [] }],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
         "responses": {
-          "200": { "description": "Daftar user berhasil diambil" }
+          "200": {
+            "description": "Daftar user berhasil diambil"
+          }
         }
       }
     },
@@ -338,9 +522,15 @@
       "get": {
         "tags": ["User"],
         "summary": "Ambil detail user yang sedang login",
-        "security": [{ "bearerAuth": [] }],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
         "responses": {
-          "200": { "description": "User ditemukan" }
+          "200": {
+            "description": "User ditemukan"
+          }
         }
       }
     },
@@ -348,17 +538,25 @@
       "put": {
         "tags": ["User"],
         "summary": "Edit data user",
-        "security": [{ "bearerAuth": [] }],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
-              "schema": { "$ref": "#/components/schemas/UserUpdate" }
+              "schema": {
+                "$ref": "#/components/schemas/UserUpdate"
+              }
             }
           }
         },
         "responses": {
-          "200": { "description": "User berhasil diperbarui" }
+          "200": {
+            "description": "User berhasil diperbarui"
+          }
         }
       }
     },
@@ -366,9 +564,15 @@
       "delete": {
         "tags": ["User"],
         "summary": "Hapus user",
-        "security": [{ "bearerAuth": [] }],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
         "responses": {
-          "200": { "description": "User berhasil dihapus" }
+          "200": {
+            "description": "User berhasil dihapus"
+          }
         }
       }
     },
@@ -376,7 +580,11 @@
       "get": {
         "tags": ["Provider"],
         "summary": "Ambil semua provider (Admin only)",
-        "security": [{ "bearerAuth": [] }],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
         "responses": {
           "200": {
             "description": "Daftar provider berhasil diambil",
@@ -384,12 +592,16 @@
               "application/json": {
                 "schema": {
                   "type": "array",
-                  "items": { "$ref": "#/components/schemas/ProviderResponse" }
+                  "items": {
+                    "$ref": "#/components/schemas/ProviderResponse"
+                  }
                 }
               }
             }
           },
-          "403": { "description": "Forbidden" }
+          "403": {
+            "description": "Forbidden"
+          }
         }
       }
     },
@@ -397,17 +609,25 @@
       "get": {
         "tags": ["Provider"],
         "summary": "Ambil data provider milik user login",
-        "security": [{ "bearerAuth": [] }],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
         "responses": {
           "200": {
             "description": "Provider ditemukan",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/ProviderResponse" }
+                "schema": {
+                  "$ref": "#/components/schemas/ProviderResponse"
+                }
               }
             }
           },
-          "404": { "description": "Provider tidak ditemukan" }
+          "404": {
+            "description": "Provider tidak ditemukan"
+          }
         }
       }
     },
@@ -415,12 +635,18 @@
       "post": {
         "tags": ["Provider"],
         "summary": "Registrasi provider",
-        "security": [{ "bearerAuth": [] }],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
-              "schema": { "$ref": "#/components/schemas/ProviderRegister" }
+              "schema": {
+                "$ref": "#/components/schemas/ProviderRegister"
+              }
             }
           }
         },
@@ -429,11 +655,15 @@
             "description": "Provider berhasil diregistrasi",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/ProviderResponse" }
+                "schema": {
+                  "$ref": "#/components/schemas/ProviderResponse"
+                }
               }
             }
           },
-          "400": { "description": "Bad Request" }
+          "400": {
+            "description": "Bad Request"
+          }
         }
       }
     },
@@ -441,7 +671,11 @@
       "put": {
         "tags": ["Provider"],
         "summary": "Update experience provider milik user login",
-        "security": [{ "bearerAuth": [] }],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -457,11 +691,15 @@
             "description": "Experience berhasil diperbarui",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/ProviderResponse" }
+                "schema": {
+                  "$ref": "#/components/schemas/ProviderResponse"
+                }
               }
             }
           },
-          "404": { "description": "Provider tidak ditemukan" }
+          "404": {
+            "description": "Provider tidak ditemukan"
+          }
         }
       }
     },
@@ -469,20 +707,30 @@
       "put": {
         "tags": ["Provider"],
         "summary": "Update status provider (Admin only)",
-        "security": [{ "bearerAuth": [] }],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
         "parameters": [
           {
             "name": "id",
             "in": "path",
             "required": true,
-            "schema": { "type": "string", "format": "uuid" }
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "f2a31b90-5e4a-4d1f-8226-9b1f2c7c5678"
           }
         ],
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
-              "schema": { "$ref": "#/components/schemas/ProviderUpdateStatus" }
+              "schema": {
+                "$ref": "#/components/schemas/ProviderUpdateStatus"
+              }
             }
           }
         },
@@ -491,12 +739,18 @@
             "description": "Status provider berhasil diperbarui",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/ProviderResponse" }
+                "schema": {
+                  "$ref": "#/components/schemas/ProviderResponse"
+                }
               }
             }
           },
-          "403": { "description": "Forbidden" },
-          "404": { "description": "Provider tidak ditemukan" }
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Provider tidak ditemukan"
+          }
         }
       }
     },
@@ -504,10 +758,18 @@
       "delete": {
         "tags": ["Provider"],
         "summary": "Hapus provider milik user login",
-        "security": [{ "bearerAuth": [] }],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
         "responses": {
-          "200": { "description": "Provider berhasil dihapus" },
-          "404": { "description": "Provider tidak ditemukan" }
+          "200": {
+            "description": "Provider berhasil dihapus"
+          },
+          "404": {
+            "description": "Provider tidak ditemukan"
+          }
         }
       }
     },
@@ -515,17 +777,17 @@
       "post": {
         "tags": ["Provider Coverage"],
         "summary": "Tambah coverage baru untuk provider login",
-        "security": [{ "bearerAuth": [] }],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
-                "properties": {
-                  "districtId": { "type": "string" }
-                },
-                "required": ["districtId"]
+                "$ref": "#/components/schemas/CoverageInput"
               }
             }
           }
@@ -535,18 +797,28 @@
             "description": "Coverage berhasil ditambahkan",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/Coverage" }
+                "schema": {
+                  "$ref": "#/components/schemas/Coverage"
+                }
               }
             }
           },
-          "400": { "description": "Bad Request (validasi gagal)" },
-          "404": { "description": "Provider tidak ditemukan" }
+          "400": {
+            "description": "Bad Request (validasi gagal)"
+          },
+          "404": {
+            "description": "Provider tidak ditemukan"
+          }
         }
       },
       "get": {
         "tags": ["Provider Coverage"],
         "summary": "Ambil daftar coverage milik provider login",
-        "security": [{ "bearerAuth": [] }],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
         "responses": {
           "200": {
             "description": "Daftar coverage provider",
@@ -554,12 +826,16 @@
               "application/json": {
                 "schema": {
                   "type": "array",
-                  "items": { "$ref": "#/components/schemas/Coverage" }
+                  "items": {
+                    "$ref": "#/components/schemas/Coverage"
+                  }
                 }
               }
             }
           },
-          "404": { "description": "Provider tidak ditemukan" }
+          "404": {
+            "description": "Provider tidak ditemukan"
+          }
         }
       }
     },
@@ -567,13 +843,20 @@
       "get": {
         "tags": ["Provider Coverage"],
         "summary": "Cari provider berdasarkan districtId",
-        "security": [{ "bearerAuth": [] }],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
         "parameters": [
           {
             "name": "districtId",
             "in": "path",
             "required": true,
-            "schema": { "type": "string" }
+            "schema": {
+              "type": "string"
+            },
+            "example": "3518020"
           }
         ],
         "responses": {
@@ -583,29 +866,44 @@
               "application/json": {
                 "schema": {
                   "type": "array",
-                  "items": { "$ref": "#/components/schemas/Provider" }
+                  "items": {
+                    "$ref": "#/components/schemas/Provider"
+                  }
                 }
               }
             }
           },
-          "404": { "description": "Distrik tidak ditemukan" }
+          "404": {
+            "description": "Distrik tidak ditemukan"
+          }
         }
       },
       "delete": {
         "tags": ["Provider Coverage"],
         "summary": "Hapus coverage milik provider login untuk districtId tertentu",
-        "security": [{ "bearerAuth": [] }],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
         "parameters": [
           {
             "name": "districtId",
             "in": "path",
             "required": true,
-            "schema": { "type": "string" }
+            "schema": {
+              "type": "string"
+            },
+            "example": "3518020"
           }
         ],
         "responses": {
-          "200": { "description": "Coverage berhasil dihapus" },
-          "404": { "description": "Coverage tidak ditemukan" }
+          "200": {
+            "description": "Coverage berhasil dihapus"
+          },
+          "404": {
+            "description": "Coverage tidak ditemukan"
+          }
         }
       }
     },
@@ -613,18 +911,26 @@
       "get": {
         "tags": ["Wilayah"],
         "summary": "Ambil semua kabupaten/kota berdasarkan ID provinsi",
-        "security": [{ "bearerAuth": [] }],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
         "parameters": [
           {
             "name": "provinceId",
             "in": "path",
             "required": true,
-            "schema": { "type": "string" },
+            "schema": {
+              "type": "string"
+            },
             "example": "35"
           }
         ],
         "responses": {
-          "200": { "description": "Berhasil mengambil data kabupaten/kota" }
+          "200": {
+            "description": "Berhasil mengambil data kabupaten/kota"
+          }
         }
       }
     },
@@ -632,18 +938,26 @@
       "get": {
         "tags": ["Wilayah"],
         "summary": "Ambil semua kecamatan berdasarkan ID kabupaten/kota",
-        "security": [{ "bearerAuth": [] }],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
         "parameters": [
           {
             "name": "regencyId",
             "in": "path",
             "required": true,
-            "schema": { "type": "string" },
+            "schema": {
+              "type": "string"
+            },
             "example": "3578"
           }
         ],
         "responses": {
-          "200": { "description": "Berhasil mengambil data kecamatan" }
+          "200": {
+            "description": "Berhasil mengambil data kecamatan"
+          }
         }
       }
     },
@@ -651,18 +965,26 @@
       "get": {
         "tags": ["Wilayah"],
         "summary": "Ambil semua desa berdasarkan ID kecamatan",
-        "security": [{ "bearerAuth": [] }],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
         "parameters": [
           {
             "name": "districtId",
             "in": "path",
             "required": true,
-            "schema": { "type": "string" },
+            "schema": {
+              "type": "string"
+            },
             "example": "3578010"
           }
         ],
         "responses": {
-          "200": { "description": "Berhasil mengambil data desa" }
+          "200": {
+            "description": "Berhasil mengambil data desa"
+          }
         }
       }
     }

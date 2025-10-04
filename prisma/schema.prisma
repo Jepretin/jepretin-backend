@@ -161,6 +161,8 @@ model ProviderPortfolio {
   id          String    @id @default(uuid())
   providerId  String
   mediaUrl    String
+  mediaId     String?   
+  mediaType   String    @default("image") 
   description String?
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
