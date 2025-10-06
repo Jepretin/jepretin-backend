@@ -102,8 +102,27 @@ router.post(
 );
 
 router.get(
-  "/portofolio",
+  "/all-portofolio",
   authMiddleware.authenticate,
   ProviderPortofolioController.getAllPortofolio
 );
+
+router.get(
+  "/my-portofolio",
+  authMiddleware.authenticate,
+  ProviderPortofolioController.getMyPortofolio
+);
+
+router.get(
+  "/get-portofolio/:providerId",
+  authMiddleware.authenticate,
+  ProviderPortofolioController.getPortofolioById
+);
+
+router.delete(
+  "/portofolio/:id",
+  authMiddleware.authenticate,
+  ProviderPortofolioController.deletePortofolio
+);
+
 module.exports = router;

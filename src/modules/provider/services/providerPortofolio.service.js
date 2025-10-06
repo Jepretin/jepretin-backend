@@ -44,7 +44,91 @@ class ProviderPortofolioService {
     if (!portofolios) {
       throw new AppError("Tidak ada portofolio", 404);
     }
-    return portofolios;
+    return portofolios.map((p) => ({
+      id: p.id,
+      providerId: p.providerId,
+      mediaUrl: p.mediaUrl,
+      mediaId: p.mediaId,
+      mediaType: p.mediaType,
+      description: p.description,
+    }));
+  }
+
+  static async getMyPortofolio(userId) {
+    const provider = await prisma.provider.findUnique({
+      where: { userId },
+    });
+
+    if (!provider) {
+      throw new AppError("provider tidak ditemukan.", 404);
+    }
+
+    const portofolio = await prisma.providerPortfolio.findMany({
+      where: {
+        providerId: provider.id,
+        deletedAt: null,
+      },
+      orderBy: { createdAt: "desc" },
+    });
+
+    if (!portofolio || portofolio.length === 0) {
+      throw new AppError("Portofolio tidak ditemukan.", 404);
+    }
+
+    return portofolio.map((p) => ({
+      id: p.id,
+      providerId: p.providerId,
+      mediaUrl: p.mediaUrl,
+      mediaId: p.mediaId,
+      mediaType: p.mediaType,
+      description: p.description,
+    }));
+  }
+
+  static async getPortofolioById(providerId) {
+    const provider = await prisma.provider.findUnique({
+      where: { id: providerId },
+      include: {
+        portfolios: true,
+      },
+    });
+
+    if (!provider) {
+      throw new AppError("provider tidak ditemukan.", 404);
+    }
+
+    const portfolios = provider.portfolios.filter((p) => !p.deletedAt);
+
+    return portfolios.map((p) => ({
+      id: p.id,
+      mediaUrl: p.mediaUrl,
+      mediaId: p.mediaId,
+      mediaType: p.mediaType,
+      description: p.description,
+    }));
+  }
+
+  static async deletePortofolio(id, userId) {
+    const portofolio = await prisma.providerPortfolio.findFirst({
+      where: {
+        id,
+        provider: {
+          userId: userId,
+        },
+      },
+    });
+
+    if (!portofolio) {
+      throw new AppError(
+        "Portofolio tidak ditemukan atau bukan milik Anda.",
+        404
+      );
+    }
+
+    await prisma.providerPortfolio.update({
+      where: { id },
+      data: { deletedAt: new Date() },
+    });
   }
 }
 

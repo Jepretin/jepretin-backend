@@ -20,7 +20,48 @@ class ProviderPortofolioController {
 
   static getAllPortofolio = handleAsync(async (req, res) => {
     const portofolios = await providerPortofolioService.getAllPortofolio();
-    return success(res, 200, "Berhasil Mengambil Portofolio.", portofolios);
+    return success(
+      res,
+      200,
+      "Berhasil Mengambil Semua Portofolio.",
+      portofolios
+    );
+  });
+
+  static getMyPortofolio = handleAsync(async (req, res) => {
+    const userId = req.user.id;
+    const portofolio = await providerPortofolioService.getMyPortofolio(userId);
+
+    return success(
+      res,
+      200,
+      "Berhasil mendapatkan portofolio provider.",
+      portofolio
+    );
+  });
+
+  static getPortofolioById = handleAsync(async (req, res) => {
+    const { providerId } = req.params;
+
+    const portofolios = await providerPortofolioService.getPortofolioById(
+      providerId
+    );
+
+    return success(
+      res,
+      200,
+      "Berhasil mendapatkan portofolio provider.",
+      portofolios
+    );
+  });
+
+  static deletePortofolio = handleAsync(async (req, res) => {
+    const userId = req.user.id;
+    const { id } = req.params;
+
+    await providerPortofolioService.deletePortofolio(id, userId);
+
+    return success(res, 200, "Portofolio berhasil dihapus.");
   });
 }
 

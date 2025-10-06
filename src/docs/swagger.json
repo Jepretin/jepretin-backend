@@ -170,6 +170,60 @@
           }
         }
       },
+      "AddPortofolio": {
+        "type": "object",
+        "required": ["mediaUrl", "mediaId", "mediaType"],
+        "properties": {
+          "mediaUrl": {
+            "type": "string",
+            "format": "uri",
+            "example": "https://drive.google.com/file/d/abc123xyz/view",
+            "description": "Link portofolio atau pengalaman (Google Drive, ImageKit, dll.)"
+          },
+          "mediaId": {
+            "type": "string",
+            "example": "72180221"
+          },
+          "mediaType": {
+            "type": "string",
+            "enum": ["image", "video"],
+            "example": "image"
+          },
+          "description": {
+            "type": "string",
+            "example": "Photographer in wedding event"
+          }
+        }
+      },
+      "SuccessResponse": {
+        "type": "object",
+        "properties": {
+          "code": { "type": "integer", "example": 200 },
+          "message": {
+            "type": "string",
+            "example": "Berhasil menambahkan portofolio."
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "example": "8accc0a1-91bb-49b8-9536-3b0ac33f9e3a"
+              },
+              "mediaUrl": {
+                "type": "string",
+                "example": "https://drive.google.com/file/d/abc123xyz/view"
+              },
+              "mediaType": { "type": "string", "example": "image" },
+              "description": {
+                "type": "string",
+                "example": "wedding photography"
+              },
+              "createdAt": { "type": "string", "format": "date-time" }
+            }
+          }
+        }
+      },
       "Province": {
         "type": "object",
         "properties": {
@@ -904,6 +958,149 @@
           "404": {
             "description": "Coverage tidak ditemukan"
           }
+        }
+      }
+    },
+    "/provider/portofolio": {
+      "post": {
+        "tags": ["Provider Portofolio"],
+        "summary": "Tambah portofolio baru untuk provider login",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddPortofolio"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Berhasil menambahkan portofolio",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validasi gagal"
+          },
+          "401": {
+            "description": "Token tidak valid atau tidak disertakan"
+          },
+          "500": {
+            "description": "Terjadi kesalahan server"
+          }
+        }
+      }
+    },
+    "/provider/all-portofolio": {
+      "get": {
+        "tags": ["Provider Portofolio"],
+        "summary": "Ambil semua portofolio dari seluruh provider (untuk admin atau public listing)",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Berhasil mengambil semua portofolio",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
+              }
+            }
+          },
+          "401": { "description": "Unauthorized" },
+          "500": { "description": "Server Error" }
+        }
+      }
+    },
+    "/provider/my-portofolio": {
+      "get": {
+        "tags": ["Provider Portofolio"],
+        "summary": "Ambil semua portofolio milik provider yang sedang login",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Berhasil mendapatkan portofolio provider login",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
+              }
+            }
+          },
+          "404": { "description": "Portofolio tidak ditemukan" },
+          "401": { "description": "Unauthorized" },
+          "500": { "description": "Server Error" }
+        }
+      }
+    },
+    "/provider/get-portofolio/{providerId}": {
+      "get": {
+        "tags": ["Provider Portofolio"],
+        "summary": "Ambil semua portofolio milik provider tertentu (customer view)",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "providerId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" },
+            "description": "ID provider yang ingin dilihat portofolionya"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Berhasil mendapatkan portofolio provider",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
+              }
+            }
+          },
+          "404": { "description": "Provider atau portofolio tidak ditemukan" },
+          "401": { "description": "Unauthorized" },
+          "500": { "description": "Server Error" }
+        }
+      }
+    },
+    "/provider/portofolio/{id}": {
+      "delete": {
+        "tags": ["Provider Portofolio"],
+        "summary": "Hapus portofolio berdasarkan ID (soft delete)",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" },
+            "description": "ID portofolio yang ingin dihapus"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Berhasil menghapus portofolio",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
+              }
+            }
+          },
+          "404": { "description": "Portofolio tidak ditemukan" },
+          "401": { "description": "Unauthorized" },
+          "500": { "description": "Server Error" }
         }
       }
     },

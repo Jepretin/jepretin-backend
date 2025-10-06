@@ -28,6 +28,7 @@ model User {
   providers      Provider?
   reviews        Review[]
   refreshTokens  UserRefreshToken[]
+  addresses CustomerAddress[]
 }
 
 model Provider {
@@ -110,9 +111,9 @@ model District {
   updatedAt DateTime           @updatedAt
   deletedAt DateTime?
   regency   Regency            @relation(fields: [regencyId], references: [id])
-  orders    Order[]
   coverages ProviderCoverage[]
   village   Village[]
+  customerAddress CustomerAddress[]
 
   @@index([regencyId])
 }
@@ -204,12 +205,29 @@ model ProviderTopping {
   @@index([providerId])
 }
 
+model CustomerAddress {
+  id String @id @default(uuid())
+  userId String
+  districtId String
+  addressDetail String
+  isPrimary Boolean @default(true)
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+  deletedAt     DateTime?
+
+  user User @relation(fields: [userId],references: [id])
+  district District @relation(fields: [districtId],references: [id])
+  order Order[]
+
+  @@index([userId])
+  @@index([districtId])
+}
+
 model Order {
   id            String              @id @default(uuid())
   userId        String
   providerId    String
-  districtId    String
-  addressDetail String?
+  addressId String
   eventDateTime DateTime
   status        OrderStatus         @default(PENDING)
   totalPrice    Decimal             @db.Decimal(12, 2)
@@ -217,7 +235,7 @@ model Order {
   updatedAt     DateTime            @updatedAt
   deletedAt     DateTime?
   notifications Notification[]
-  district      District            @relation(fields: [districtId], references: [id])
+  customerAddress      CustomerAddress            @relation(fields: [addressId], references: [id])
   provider      Provider            @relation(fields: [providerId], references: [id])
   user          User                @relation(fields: [userId], references: [id])
   orderItems    OrderItem[]
@@ -227,7 +245,6 @@ model Order {
 
   @@index([userId])
   @@index([providerId])
-  @@index([districtId])
   @@index([status])
 }
 
