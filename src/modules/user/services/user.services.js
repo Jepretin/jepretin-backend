@@ -3,17 +3,56 @@ const bcrypt = require("bcrypt");
 const AppError = require("../../../utils/appError");
 
 class UserService {
+  //Untuk mengambil semua user (Admin Only)
   static async getAllUsers() {
-    const users = prisma.user.findMany();
-    if (!users) {
-      throw new AppError("Tidak ada Data User", 404);
+    const users = await prisma.user.findMany({
+      where: { deletedAt: null },
+      select: {
+        id: true,
+        name: true,
+        role: true,
+        email: true,
+        phone: true,
+        avatar: true,
+        isActive: true,
+        createdAt: true,
+      },
+      orderBy: { createdAt: "desc" },
+    });
+
+    if (!users || users.length === 0) {
+      throw new AppError("Tidak ada data user yang ditemukan", 404);
     }
-    return users;
+
+    return {
+      totalUsers: users.length,
+      users: users.map((user) => ({
+        id: user.id,
+        name: user.name,
+        role: user.role,
+        email: user.email,
+        phone: user.phone,
+        avatar: user.avatar,
+        isActive: user.isActive,
+        createdAt: user.createdAt,
+      })),
+    };
   }
 
+  //Untuk mengambil data user yang login
   static async getUserById(userId) {
     const user = await prisma.user.findUnique({
-      where: { id: userId },
+      where: { id: userId, deletedAt: null },
+      select: {
+        id: true,
+        name: true,
+        role: true,
+        email: true,
+        phone: true,
+        avatar: true,
+        isActive: true,
+        createdAt: true,
+      },
     });
 
     if (!user) {
@@ -21,68 +60,68 @@ class UserService {
     }
 
     return {
-      id: user.id,
-      name: user.name,
-      email: user.email,
-      phone: user.phone,
-      avatar: user.avatar,
+      message: "Berhasil mendapatkan data user",
+      data: user,
     };
   }
 
+  // Untuk memperbarui user
   static async updateUser(userId, data) {
     try {
-      // 1. Build update object hanya untuk field yang dikirim
       const updateData = {};
 
-      if (data.name !== undefined) updateData.name = data.name;
-      if (data.email !== undefined) updateData.email = data.email;
-      if (data.phone !== undefined) updateData.phone = data.phone;
-      if (data.avatar !== undefined) updateData.avatar = data.avatar;
+      if (data.name) updateData.name = data.name.trim();
+      if (data.email) updateData.email = data.email.toLowerCase().trim();
+      if (data.phone) updateData.phone = data.phone.trim();
+      if (data.avatar) updateData.avatar = data.avatar.trim();
 
       if (data.password) {
         updateData.password = await bcrypt.hash(data.password, 10);
       }
 
-      // 2. Cek apakah ada yang diupdate
       if (Object.keys(updateData).length === 0) {
         throw new AppError("Tidak ada data yang diperbarui", 400);
       }
 
-      // 3. Update user
       const updatedUser = await prisma.user.update({
         where: { id: userId },
         data: updateData,
         select: {
           id: true,
           name: true,
+          role: true,
           email: true,
           phone: true,
           avatar: true,
-          // Jangan return password
+          isActive: true,
+          updatedAt: true,
         },
       });
 
-      // 4. Create notification
+      // Notifikasi otomatis
       await prisma.notification.create({
         data: {
           userId: updatedUser.id,
           type: "SYSTEM",
-          message: `Profil berhasil diperbarui`,
+          message: "Profil berhasil diperbarui",
           isRead: false,
         },
       });
 
-      // 5. Return full user data (tanpa password)
-      return updatedUser;
+      return {
+        message: "User berhasil diperbarui",
+        data: updatedUser,
+      };
     } catch (error) {
       if (error.code === "P2002") {
-        throw new AppError("Email sudah digunakan", 409);
+        throw new AppError("Email sudah digunakan oleh akun lain", 409);
       }
       if (error instanceof AppError) throw error;
-      throw new AppError("Gagal memperbarui User", 500);
+      throw new AppError("Terjadi kesalahan saat memperbarui user", 500);
     }
   }
 
+  // Untuk menghapus user (Soft Delete)
   static async deleteUser(userId) {
     const user = await prisma.user.findUnique({
       where: { id: userId },
@@ -92,15 +131,27 @@ class UserService {
       throw new AppError("User tidak ditemukan", 404);
     }
 
-    return prisma.user.update({
+    const deletedUser = await prisma.user.update({
       where: { id: userId },
       data: {
         deletedAt: new Date(),
         isActive: false,
-
         email: `${user.email}__deleted_${Date.now()}`,
       },
+      select: {
+        id: true,
+        name: true,
+        role: true,
+        email: true,
+        isActive: true,
+        deletedAt: true,
+      },
     });
+
+    return {
+      message: "User berhasil dihapus (soft delete)",
+      data: deletedUser,
+    };
   }
 }
 

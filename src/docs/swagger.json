@@ -172,54 +172,126 @@
       },
       "AddPortofolio": {
         "type": "object",
-        "required": ["mediaUrl", "mediaId", "mediaType"],
         "properties": {
-          "mediaUrl": {
-            "type": "string",
-            "format": "uri",
-            "example": "https://drive.google.com/file/d/abc123xyz/view",
-            "description": "Link portofolio atau pengalaman (Google Drive, ImageKit, dll.)"
-          },
-          "mediaId": {
-            "type": "string",
-            "example": "72180221"
+          "media": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "binary"
+            },
+            "description": "File portofolio yang diupload (maksimal 10 file)"
           },
           "mediaType": {
             "type": "string",
-            "enum": ["image", "video"],
-            "example": "image"
+            "example": "image/video"
           },
           "description": {
             "type": "string",
-            "example": "Photographer in wedding event"
+            "example": "Hasil foto pernikahan di Surabaya",
+            "description": "Deskripsi singkat portofolio (opsional, maksimal 255 karakter)"
+          }
+        }
+      },
+      "GetPortofolioByLocationResponse": {
+        "type": "object",
+        "properties": {
+          "code": { "type": "integer", "example": 200 },
+          "message": {
+            "type": "string",
+            "example": "Berhasil mendapatkan portofolio sesuai lokasi."
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "totalProviders": { "type": "integer", "example": 3 },
+              "providers": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "providerId": {
+                      "type": "string",
+                      "example": "b0aa28ca-8f5e-49fd-9827-65854ec15259"
+                    },
+                    "providerName": {
+                      "type": "string",
+                      "example": "Uwak Uwik"
+                    },
+                    "providerAvatar": {
+                      "type": "string",
+                      "example": "https://ik.imagekit.io/kevinvin/avatars/uwak.jpg"
+                    },
+                    "totalPortfolios": { "type": "integer", "example": 5 },
+                    "portfolios": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "example": "b0aa28ca-8f5e-49fd-9827-65854ec15259"
+                          },
+                          "mediaUrl": {
+                            "type": "string",
+                            "example": "https://ik.imagekit.io/kevinvin/jepretin/portofolio/foto1.jpg"
+                          },
+                          "mediaType": { "type": "string", "example": "image" },
+                          "description": {
+                            "type": "string",
+                            "example": "Pernikahan di Bandung 2025"
+                          },
+                          "createdAt": {
+                            "type": "string",
+                            "format": "date-time",
+                            "example": "2025-10-07T06:51:23.303Z"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       },
       "SuccessResponse": {
         "type": "object",
         "properties": {
-          "code": { "type": "integer", "example": 200 },
+          "code": { "type": "integer", "example": 201 },
           "message": {
             "type": "string",
             "example": "Berhasil menambahkan portofolio."
           },
           "data": {
-            "type": "object",
-            "properties": {
-              "id": {
-                "type": "string",
-                "example": "8accc0a1-91bb-49b8-9536-3b0ac33f9e3a"
-              },
-              "mediaUrl": {
-                "type": "string",
-                "example": "https://drive.google.com/file/d/abc123xyz/view"
-              },
-              "mediaType": { "type": "string", "example": "image" },
-              "description": {
-                "type": "string",
-                "example": "wedding photography"
-              },
-              "createdAt": { "type": "string", "format": "date-time" }
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "example": "b0aa28ca-8f5e-49fd-9827-65854ec15259"
+                },
+                "providerId": {
+                  "type": "string",
+                  "example": "728b61bb-8dfd-4b31-80ed-aed64654e335"
+                },
+                "providerName": { "type": "string", "example": "uwak uwik" },
+                "mediaUrl": {
+                  "type": "string",
+                  "example": "https://ik.imagekit.io/kevinvin/jepretin/portofolio/IMG_4682_uBehfrPs6.JPG"
+                },
+                "mediaType": {
+                  "type": "string",
+                  "enum": ["image", "video"],
+                  "example": "image"
+                },
+                "description": {
+                  "type": "string",
+                  "example": "Photographer in event wedding."
+                },
+                "createdAt": { "type": "string", "format": "date-time" }
+              }
             }
           }
         }
@@ -559,7 +631,7 @@
     "/user/all-user": {
       "get": {
         "tags": ["User"],
-        "summary": "Ambil semua user",
+        "summary": "Ambil semua user (Admin Only)",
         "security": [
           {
             "bearerAuth": []
@@ -964,12 +1036,12 @@
     "/provider/portofolio": {
       "post": {
         "tags": ["Provider Portofolio"],
-        "summary": "Tambah portofolio baru untuk provider login",
+        "summary": "Upload portofolio baru untuk provider login (maksimal 10 file)",
         "security": [{ "bearerAuth": [] }],
         "requestBody": {
           "required": true,
           "content": {
-            "application/json": {
+            "multipart/form-data": {
               "schema": {
                 "$ref": "#/components/schemas/AddPortofolio"
               }
@@ -987,22 +1059,19 @@
               }
             }
           },
-          "400": {
-            "description": "Validasi gagal"
+          "400": { "description": "Validasi gagal" },
+          "401": { "description": "Token tidak valid atau tidak disertakan" },
+          "403": {
+            "description": "Provider belum terverifikasi atau tidak aktif"
           },
-          "401": {
-            "description": "Token tidak valid atau tidak disertakan"
-          },
-          "500": {
-            "description": "Terjadi kesalahan server"
-          }
+          "500": { "description": "Kesalahan server" }
         }
       }
     },
     "/provider/all-portofolio": {
       "get": {
         "tags": ["Provider Portofolio"],
-        "summary": "Ambil semua portofolio dari seluruh provider (untuk admin atau public listing)",
+        "summary": "Ambil semua portofolio dari seluruh provider (khusus admin)",
         "security": [{ "bearerAuth": [] }],
         "responses": {
           "200": {
@@ -1016,6 +1085,7 @@
             }
           },
           "401": { "description": "Unauthorized" },
+          "403": { "description": "Hanya admin yang dapat mengakses" },
           "500": { "description": "Server Error" }
         }
       }
@@ -1070,6 +1140,30 @@
           "404": { "description": "Provider atau portofolio tidak ditemukan" },
           "401": { "description": "Unauthorized" },
           "500": { "description": "Server Error" }
+        }
+      }
+    },
+    "/provider/portofolio-by-location": {
+      "get": {
+        "tags": ["Provider Portofolio"],
+        "summary": "Ambil portofolio provider berdasarkan lokasi customer (districtId dari alamat utama)",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Berhasil mendapatkan portofolio sesuai lokasi.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetPortofolioByLocationResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Alamat utama pelanggan tidak ditemukan atau tidak ada provider di lokasi tersebut."
+          },
+          "401": { "description": "Token tidak valid atau tidak disertakan." },
+          "500": { "description": "Terjadi kesalahan server." }
         }
       }
     },

@@ -170,6 +170,13 @@ class ProviderService {
       data: { status },
     });
 
+    if (status === "ACCEPTED") {
+      await prisma.user.update({
+        where: { id: provider.userId },
+        data: { role: "PROVIDER" },
+      });
+    }
+
     await prisma.notification.create({
       data: {
         userId: updatedProvider.userId,

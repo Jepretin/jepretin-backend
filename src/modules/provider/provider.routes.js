@@ -7,6 +7,7 @@ const authMiddleware = require("../../middlewares/authMiddleware");
 const validate = require("../../middlewares/validate");
 const providerValidation = require("./validations/provider.validation");
 const PortofolioValidation = require("./validations/providerPortofolio.validation");
+const upload = require("../../middlewares/multer");
 const router = express.Router();
 
 // Provider
@@ -97,13 +98,15 @@ router.get(
 router.post(
   "/portofolio",
   authMiddleware.authenticate,
-  validate(PortofolioValidation.createPortofolio),
+  upload.array("media", 10),
+  validate(PortofolioValidation.createPortofolio()),
   ProviderPortofolioController.addPortofolio
 );
 
 router.get(
   "/all-portofolio",
   authMiddleware.authenticate,
+  authMiddleware.authorize("ADMIN"),
   ProviderPortofolioController.getAllPortofolio
 );
 
@@ -117,6 +120,12 @@ router.get(
   "/get-portofolio/:providerId",
   authMiddleware.authenticate,
   ProviderPortofolioController.getPortofolioById
+);
+
+router.get(
+  "/portofolio-by-location",
+  authMiddleware.authenticate,
+  ProviderPortofolioController.getPortofolioByCustomerLocation
 );
 
 router.delete(
