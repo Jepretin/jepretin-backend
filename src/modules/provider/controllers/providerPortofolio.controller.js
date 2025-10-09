@@ -2,16 +2,11 @@ const providerPortofolioService = require("../services/providerPortofolio.servic
 const imagekit = require("../../../services/imagekit.service");
 const { success } = require("../../../utils/response");
 const handleAsync = require("../../../utils/handleAsync");
-const AppError = require("../../../utils/appError");
 
 class ProviderPortofolioController {
   static addPortofolio = handleAsync(async (req, res) => {
     const userId = req.user.id;
     const { description, mediaType } = req.body;
-
-    if (!req.files || req.files.length === 0) {
-      return res.status(400).json({ message: "Tidak ada file yang diupload" });
-    }
 
     const uploadResults = await Promise.all(
       req.files.map(async (file) => {

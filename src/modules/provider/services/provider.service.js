@@ -119,7 +119,10 @@ class ProviderService {
   }
 
   static async updateExperience(userId, experience) {
-    const provider = await prisma.provider.findUnique({ where: { userId } });
+    const provider = await prisma.provider.findUnique({
+      where: { userId },
+      include: { user: true },
+    });
 
     if (!provider) {
       throw new AppError("Provider tidak ditemukan", 404);
@@ -132,23 +135,38 @@ class ProviderService {
       );
     }
 
-    const updatedProvider = await prisma.provider.update({
-      where: { userId },
-      data: { experience },
-    });
+    const [updatedProvider] = await prisma.$transaction([
+      prisma.provider.update({
+        where: { userId },
+        data: {
+          experience,
+          status: "PENDING",
+        },
+        include: { user: true },
+      }),
+      prisma.notification.create({
+        data: {
+          userId,
+          type: "SYSTEM",
+          message:
+            "Experience berhasil diperbarui! Status Anda kembali menjadi PENDING untuk diverifikasi ulang.",
+          isRead: false,
+        },
+      }),
+    ]);
 
-    await prisma.notification.create({
+    return {
+      code: 200,
+      message: "Experience berhasil diperbarui dan menunggu verifikasi admin.",
       data: {
-        userId: updatedProvider.userId,
-        type: "SYSTEM",
-        message: "Experience berhasil diperbarui!",
-        isRead: false,
+        providerId: updatedProvider.id,
+        name: updatedProvider.user.name,
+        email: updatedProvider.user.email,
+        newStatus: updatedProvider.status,
+        experience: updatedProvider.experience,
       },
-    });
-
-    return updatedProvider;
+    };
   }
-
   static async updateStatus(providerId, status, userRole) {
     if (userRole !== "ADMIN") {
       throw new AppError(
@@ -159,34 +177,64 @@ class ProviderService {
 
     const provider = await prisma.provider.findUnique({
       where: { id: providerId },
+      include: { user: true, roles: { include: { role: true } } },
     });
 
     if (!provider) {
       throw new AppError("Provider tidak ditemukan", 404);
     }
 
-    const updatedProvider = await prisma.provider.update({
-      where: { id: providerId },
-      data: { status },
-    });
-
-    if (status === "ACCEPTED") {
-      await prisma.user.update({
-        where: { id: provider.userId },
-        data: { role: "PROVIDER" },
+    const result = await prisma.$transaction(async (tx) => {
+      // Update status provider
+      const updatedProvider = await tx.provider.update({
+        where: { id: providerId },
+        data: { status },
+        include: { user: true, roles: { include: { role: true } } },
       });
-    }
 
-    await prisma.notification.create({
-      data: {
-        userId: updatedProvider.userId,
-        type: "SYSTEM",
-        message: `Status pendaftaran Anda diperbarui menjadi ${status}`,
-        isRead: false,
-      },
+      let newUserRole = provider.user.role;
+
+      // Jika diterima → ubah user.role ke PROVIDER
+      if (status === "ACCEPTED") {
+        await tx.user.update({
+          where: { id: provider.userId },
+          data: { role: "PROVIDER" },
+        });
+        newUserRole = "PROVIDER";
+      }
+
+      // Kirim notifikasi
+      const notif = await tx.notification.create({
+        data: {
+          userId: provider.userId,
+          type: "SYSTEM",
+          message: `Status pendaftaran Anda diperbarui menjadi ${status}`,
+          isRead: false,
+        },
+      });
+
+      return { updatedProvider, notif, newUserRole };
     });
 
-    return updatedProvider;
+    const { updatedProvider, newUserRole } = result;
+
+    return {
+      code: 200,
+      message: "Status provider berhasil diperbarui.",
+      data: {
+        providerId: updatedProvider.id,
+        name: updatedProvider.user.name,
+        email: updatedProvider.user.email,
+        phone: updatedProvider.user.phone,
+        experience: updatedProvider.experience,
+        newStatus: updatedProvider.status,
+        newRole: newUserRole,
+        rolesTaken: updatedProvider.roles.map((r) => ({
+          id: r.role.id,
+          name: r.role.name,
+        })),
+      },
+    };
   }
 
   static async deleteProvider(userId) {

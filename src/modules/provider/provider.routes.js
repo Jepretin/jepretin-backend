@@ -3,10 +3,14 @@ const ProviderController = require("../provider/controllers/provider.controller"
 const ProviderRoleController = require("../provider/controllers/providerRole.controller");
 const ProviderCoverageController = require("../provider/controllers/providerCoverage.controller");
 const ProviderPortofolioController = require("../provider/controllers/providerPortofolio.controller");
+const ProviderBundleController = require("../provider/controllers/providerBundle.controller");
+const ProviderToppingController = require("./controllers/providerTopping.controller");
 const authMiddleware = require("../../middlewares/authMiddleware");
 const validate = require("../../middlewares/validate");
 const providerValidation = require("./validations/provider.validation");
 const PortofolioValidation = require("./validations/providerPortofolio.validation");
+const ProviderBundleValidation = require("./validations/providerBundle.validation");
+const ProviderToppingValidation = require("./validations/providerTopping.validation");
 const upload = require("../../middlewares/multer");
 const router = express.Router();
 
@@ -99,7 +103,7 @@ router.post(
   "/portofolio",
   authMiddleware.authenticate,
   upload.array("media", 10),
-  validate(PortofolioValidation.createPortofolio()),
+  validate(PortofolioValidation.createPortofolio),
   ProviderPortofolioController.addPortofolio
 );
 
@@ -132,6 +136,84 @@ router.delete(
   "/portofolio/:id",
   authMiddleware.authenticate,
   ProviderPortofolioController.deletePortofolio
+);
+
+//Provider Bundle
+router.post(
+  "/bundle",
+  authMiddleware.authenticate,
+  validate(ProviderBundleValidation.createBundle),
+  ProviderBundleController.createBundle
+);
+
+router.get(
+  "/all-bundle",
+  authMiddleware.authenticate,
+  ProviderBundleController.getAllBundle
+);
+
+router.get(
+  "/my-bundle",
+  authMiddleware.authenticate,
+  ProviderBundleController.getMyBundle
+);
+
+router.get(
+  "/bundle/:providerId",
+  authMiddleware.authenticate,
+  ProviderBundleController.getBundleById
+);
+
+router.put(
+  "/bundle/:id",
+  authMiddleware.authenticate,
+  validate(ProviderBundleValidation.updateBundle),
+  ProviderBundleController.updateBundle
+);
+
+router.delete(
+  "/bundle/:id",
+  authMiddleware.authenticate,
+  ProviderBundleController.deleteBundle
+);
+
+//Provider Topping
+router.post(
+  "/topping",
+  authMiddleware.authenticate,
+  validate(ProviderToppingValidation.createTopping),
+  ProviderToppingController.createTopping
+);
+
+router.get(
+  "/all-topping",
+  authMiddleware.authenticate,
+  ProviderToppingController.getAllTopping
+);
+
+router.get(
+  "/my-topping",
+  authMiddleware.authenticate,
+  ProviderToppingController.getMyTopping
+);
+
+router.get(
+  "/topping/:providerId",
+  authMiddleware.authenticate,
+  ProviderToppingController.getToppingByProviderId
+);
+
+router.put(
+  "/topping/:id",
+  authMiddleware.authenticate,
+  validate(ProviderBundleValidation.updateBundle),
+  ProviderToppingController.updateTopping
+);
+
+router.delete(
+  "/topping/:id",
+  authMiddleware.authenticate,
+  ProviderToppingController.deleteTopping
 );
 
 module.exports = router;

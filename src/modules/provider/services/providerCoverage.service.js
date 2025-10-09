@@ -72,13 +72,6 @@ class ProviderCoverageService {
       throw new AppError("Provider tidak ditemukan", 404);
     }
 
-    if (provider.status !== "ACCEPTED") {
-      throw new AppError(
-        "Provider belum diterima, tidak bisa menambah coverage",
-        403
-      );
-    }
-
     const coverages = await prisma.providerCoverage.findMany({
       where: { providerId: provider.id, deletedAt: null },
       include: {
@@ -90,7 +83,6 @@ class ProviderCoverageService {
       },
     });
 
-    // Formatter biar clean
     return coverages.map((c) => ({
       id: c.id,
       district: {
@@ -114,9 +106,8 @@ class ProviderCoverageService {
       include: {
         provider: {
           select: {
-            user: { select: { name: true } }, // ambil nama user
+            user: { select: { name: true } },
             roles: {
-              // ambil list role dari ProviderRole
               select: {
                 role: { select: { name: true } },
               },
@@ -145,7 +136,6 @@ class ProviderCoverageService {
       throw new AppError("Tidak ada provider yang mencover district ini", 404);
     }
 
-    // formatter hasil
     return coverages.map((c) => ({
       providerName: c.provider.user.name,
       providerRoles: c.provider.roles.map((r) => r.role.name),

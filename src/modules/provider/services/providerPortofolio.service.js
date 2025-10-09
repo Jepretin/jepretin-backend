@@ -15,6 +15,10 @@ class ProviderPortofolioService {
       include: { user: true },
     });
 
+    if (!req.files || req.files.length === 0) {
+      throw new AppError("Tidak ada file yang diupload", 400);
+    }
+
     if (
       !provider ||
       !provider.user.isActive ||
