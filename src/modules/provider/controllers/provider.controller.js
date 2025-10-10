@@ -37,9 +37,9 @@ class ProviderController {
   });
 
   static updateStatus = handleAsync(async (req, res) => {
-    const { id } = req.params; // providerId
+    const { id } = req.params;
     const { status } = req.body;
-    const userRole = req.user.role; // role user yang sedang login
+    const userRole = req.user.role;
 
     const updated = await ProviderService.updateStatus(id, status, userRole);
     return success(res, 200, "Status provider berhasil diperbarui.", updated);

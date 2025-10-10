@@ -296,6 +296,66 @@
           }
         }
       },
+      "ProviderBundleCreate": {
+        "type": "object",
+        "required": ["name", "description", "price"],
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Wedding Premium Package"
+          },
+          "description": {
+            "type": "string",
+            "example": "Bundle foto pre-wedding dan wedding day dengan dokumentasi video."
+          },
+          "price": {
+            "type": "number",
+            "example": 15000000
+          }
+        }
+      },
+      "ProviderBundleUpdate": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string", "example": "Wedding Gold Package" },
+          "description": {
+            "type": "string",
+            "example": "Paket foto dan video eksklusif"
+          },
+          "price": { "type": "number", "example": 18000000 }
+        }
+      },
+      "ProviderToppingCreate": {
+        "type": "object",
+        "required": ["name", "description", "price"],
+        "properties": {
+          "name": { "type": "string", "example": "Extra Drone Footage" },
+          "description": {
+            "type": "string",
+            "example": "Tambahan dokumentasi aerial menggunakan drone"
+          },
+          "price": { "type": "number", "example": 500000 },
+          "isStandalone": { "type": "boolean", "example": false },
+          "bundleId": {
+            "type": "string",
+            "example": "a2d5b6d1-5e3b-4a8e-bb82-efa4e5f98c45",
+            "description": "ID bundle yang terhubung (wajib jika isStandalone = false)"
+          }
+        }
+      },
+      "ProviderToppingUpdate": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string", "example": "Extra Photo Session" },
+          "description": {
+            "type": "string",
+            "example": "Tambahan 1 jam sesi foto"
+          },
+          "price": { "type": "number", "example": 250000 },
+          "isStandalone": { "type": "boolean", "example": true },
+          "bundleId": { "type": "string", "example": "uuid-optional" }
+        }
+      },
       "Province": {
         "type": "object",
         "properties": {
@@ -1195,6 +1255,232 @@
           "404": { "description": "Portofolio tidak ditemukan" },
           "401": { "description": "Unauthorized" },
           "500": { "description": "Server Error" }
+        }
+      }
+    },
+    "/provider/bundle": {
+      "post": {
+        "tags": ["Provider Bundle"],
+        "summary": "Tambah bundle baru",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ProviderBundleCreate" }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Provider bundle berhasil ditambahkan" },
+          "400": { "description": "Validasi gagal" },
+          "401": { "description": "Unauthorized" },
+          "500": { "description": "Server Error" }
+        }
+      }
+    },
+    "/provider/all-bundle": {
+      "get": {
+        "tags": ["Provider Bundle"],
+        "summary": "Ambil semua provider bundle (publik)",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": { "description": "Berhasil mendapatkan semua bundle" },
+          "500": { "description": "Server Error" }
+        }
+      }
+    },
+    "/provider/my-bundle": {
+      "get": {
+        "tags": ["Provider Bundle"],
+        "summary": "Ambil semua bundle milik provider saat ini",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": { "description": "Berhasil mendapatkan bundle milik Anda" },
+          "401": { "description": "Unauthorized" }
+        }
+      }
+    },
+    "/provider/bundle/{providerId}": {
+      "get": {
+        "tags": ["Provider Bundle"],
+        "summary": "Ambil semua bundle berdasarkan providerId",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "providerId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Berhasil mendapatkan bundle provider" },
+          "404": { "description": "Provider tidak ditemukan" }
+        }
+      }
+    },
+    "/provider/bundle/{id}": {
+      "put": {
+        "tags": ["Provider Bundle"],
+        "summary": "Perbarui bundle berdasarkan ID",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ProviderBundleUpdate" }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Bundle berhasil diperbarui" },
+          "403": { "description": "Tidak memiliki akses" },
+          "404": { "description": "Bundle tidak ditemukan" }
+        }
+      },
+      "delete": {
+        "tags": ["Provider Bundle"],
+        "summary": "Hapus bundle berdasarkan ID (soft delete)",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Bundle berhasil dihapus" },
+          "404": { "description": "Bundle tidak ditemukan" }
+        }
+      }
+    },
+    "/provider/topping": {
+      "post": {
+        "tags": ["Provider Topping"],
+        "summary": "Tambah topping baru",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ProviderToppingCreate" }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Provider topping berhasil ditambahkan" },
+          "400": { "description": "Validasi gagal" },
+          "401": { "description": "Unauthorized" }
+        }
+      }
+    },
+    "/provider/all-topping": {
+      "get": {
+        "tags": ["Provider Topping"],
+        "summary": "Ambil semua topping dari semua provider",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": { "description": "Berhasil mendapatkan semua topping" }
+        }
+      }
+    },
+    "/provider/my-topping": {
+      "get": {
+        "tags": ["Provider Topping"],
+        "summary": "Ambil topping milik provider saat ini",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": { "description": "Berhasil mendapatkan topping milik Anda" }
+        }
+      }
+    },
+    "/provider/topping/{providerId}": {
+      "get": {
+        "tags": ["Provider Topping"],
+        "summary": "Ambil semua topping berdasarkan providerId",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "providerId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Berhasil mendapatkan topping provider" },
+          "404": { "description": "Provider tidak ditemukan" }
+        }
+      }
+    },
+    "/provider/topping/{id}": {
+      "put": {
+        "tags": ["Provider Topping"],
+        "summary": "Perbarui topping berdasarkan ID",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ProviderToppingUpdate" }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Provider topping berhasil diperbarui" },
+          "404": { "description": "Topping tidak ditemukan" }
+        }
+      },
+      "delete": {
+        "tags": ["Provider Topping"],
+        "summary": "Hapus topping berdasarkan ID (soft delete)",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Topping berhasil dihapus" },
+          "404": { "description": "Topping tidak ditemukan" }
+        }
+      }
+    },
+    "/wilayah/provinces": {
+      "get": {
+        "tags": ["Wilayah"],
+        "summary": "Ambil semua data provinsi",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Berhasil mengambil data provinsi"
+          }
         }
       }
     },
