@@ -20,13 +20,18 @@ class ProviderRoleService {
     });
   }
 
-  static async getRolesByProvider(providerId) {
-    return prisma.providerRole.findMany({
-      where: { providerId },
-      include: { role: true },
+  static async getRoles() {
+    return prisma.role.findMany({
+      where: { deletedAt: null },
+      select: {
+        id: true,
+        name: true,
+      },
+      orderBy: {
+        name: "asc",
+      },
     });
   }
-
   static async removeRole(providerId, roleId) {
     try {
       return await prisma.providerRole.delete({

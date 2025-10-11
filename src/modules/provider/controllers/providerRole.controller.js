@@ -11,10 +11,9 @@ class ProviderRoleController {
     return success(res, 200, "Role berhasil ditambahkan ke Provider.", result);
   });
 
-  static getRolesByProvider = handleAsync(async (req, res) => {
-    const providerId = req.params.providerId;
-    const roles = await ProviderRoleService.getRolesByProvider(providerId);
-    return success(res, 200, "Daftar Provider Role berhasil diambil", roles);
+  static getRoles = handleAsync(async (req, res) => {
+    const roles = await ProviderRoleService.getRoles();
+    return success(res, 200, "Daftar Role berhasil diambil", roles);
   });
 
   static removeRole = handleAsync(async (req, res) => {

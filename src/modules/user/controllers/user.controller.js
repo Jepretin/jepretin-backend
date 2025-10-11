@@ -1,4 +1,4 @@
-const UserService = require("../services/user.services");
+const UserService = require("../services/user.service");
 const { success } = require("../../../utils/response");
 const handleAsync = require("../../../utils/handleAsync");
 

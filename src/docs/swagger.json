@@ -480,6 +480,30 @@
           }
         }
       },
+      "RoleResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "example": "b0d4c29e-9139-4a89-8f2f-12345b6a1f8a"
+          },
+          "name": {
+            "type": "string",
+            "example": "Photographer"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2025-09-27T12:34:56.789Z"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2025-09-27T15:20:10.123Z"
+          }
+        }
+      },
       "Coverage": {
         "type": "object",
         "properties": {
@@ -813,6 +837,32 @@
           },
           "404": {
             "description": "Provider tidak ditemukan"
+          }
+        }
+      }
+    },
+    "/provider/roles": {
+      "get": {
+        "tags": ["Provider"],
+        "summary": "Ambil data roles untuk provider.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Role ditemukan",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RoleResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Roles tidak ditemukan"
           }
         }
       }

@@ -13,7 +13,7 @@ class ProviderController {
       roleIds: roles,
     });
 
-    return success(res, 200, "Provider berhasil diregistrasi.", provider);
+    return success(res, 201, "Provider berhasil diregistrasi.", provider);
   });
 
   static getAllProvider = handleAsync(async (req, res) => {

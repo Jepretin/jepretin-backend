@@ -2,11 +2,32 @@ const providerPortofolioService = require("../services/providerPortofolio.servic
 const imagekit = require("../../../services/imagekit.service");
 const { success } = require("../../../utils/response");
 const handleAsync = require("../../../utils/handleAsync");
+const AppError = require("../../../utils/appError");
 
 class ProviderPortofolioController {
   static addPortofolio = handleAsync(async (req, res) => {
     const userId = req.user.id;
     const { description, mediaType } = req.body;
+
+    if (!req.files || req.files.length === 0) {
+      throw new AppError("Tidak ada file yang diupload", 400);
+    }
+
+    const allowedMime = {
+      image: ["image/jpeg", "image/png", "image/jpg", "image/webp"],
+      video: ["video/mp4"],
+    };
+
+    const invalidFile = req.files.find(
+      (file) => !allowedMime[mediaType].includes(file.mimetype)
+    );
+
+    if (invalidFile) {
+      throw new AppError(
+        `File "${invalidFile.originalname}" memiliki tipe "${invalidFile.mimetype}" yang tidak sesuai dengan mediaType="${mediaType}".`,
+        400
+      );
+    }
 
     const uploadResults = await Promise.all(
       req.files.map(async (file) => {
@@ -19,7 +40,7 @@ class ProviderPortofolioController {
         return {
           mediaUrl: result.url,
           mediaId: result.fileId,
-          mediaType: mediaType || "image",
+          mediaType,
         };
       })
     );
@@ -35,6 +56,7 @@ class ProviderPortofolioController {
         })
       )
     );
+
     return success(res, 201, "Berhasil menambahkan portofolio.", portfolios);
   });
 
@@ -82,6 +104,58 @@ class ProviderPortofolioController {
       200,
       "Berhasil mendapatkan portofolio sesuai lokasi.",
       portfolios
+    );
+  });
+
+  //Update Portofolio
+  static updatePortofolio = handleAsync(async (req, res) => {
+    const userId = req.user.id;
+    const { id } = req.params;
+    const { description, mediaType } = req.body;
+
+    let uploadResult = null;
+
+    if (req.files && req.files.length > 0) {
+      const file = req.files[0];
+      const allowedMime = {
+        image: ["image/jpeg", "image/png", "image/jpg"],
+        video: ["video/mp4"],
+      };
+
+      if (!allowedMime[mediaType]?.includes(file.mimetype)) {
+        throw new AppError(
+          `File bertipe "${file.mimetype}" tidak sesuai dengan mediaType "${mediaType}".`,
+          400
+        );
+      }
+
+      const result = await imagekit.upload({
+        file: file.buffer.toString("base64"),
+        fileName: file.originalname,
+        folder: "/portofolio",
+      });
+
+      uploadResult = {
+        mediaUrl: result.url,
+        mediaId: result.fileId,
+        mediaType: mediaType || "image",
+      };
+    }
+
+    const updatedPortofolio = await providerPortofolioService.updatePortofolio({
+      id,
+      userId,
+      description,
+      mediaType,
+      mediaUrl: uploadResult?.mediaUrl,
+      mediaId: uploadResult?.mediaId,
+    });
+
+    return success(
+      res,
+      200,
+      "Portofolio berhasil diperbarui",
+      updatedPortofolio
     );
   });
 

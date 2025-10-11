@@ -113,7 +113,6 @@ model District {
   regency   Regency            @relation(fields: [regencyId], references: [id])
   coverages ProviderCoverage[]
   village   Village[]
-  customerAddress CustomerAddress[]
 
   @@index([regencyId])
 }
@@ -126,6 +125,8 @@ model Village {
   updatedAt  DateTime  @updatedAt @default(now())
   deletedAt  DateTime?
   district   District  @relation(fields: [districtId], references: [id])
+
+  address CustomerAddress[]
   @@index([districtId])
 }
 
@@ -209,7 +210,7 @@ model ProviderTopping {
 model CustomerAddress {
   id String @id @default(uuid())
   userId String
-  districtId String
+  villageId String
   addressDetail String
   isPrimary Boolean @default(true)
   createdAt     DateTime            @default(now())
@@ -217,11 +218,11 @@ model CustomerAddress {
   deletedAt     DateTime?
 
   user User @relation(fields: [userId],references: [id])
-  district District @relation(fields: [districtId],references: [id])
+  village Village @relation(fields: [villageId],references: [id])
   order Order[]
 
   @@index([userId])
-  @@index([districtId])
+  @@index([villageId])
 }
 
 model Order {

@@ -63,9 +63,9 @@ router.post(
   ProviderRoleController.assignRole
 );
 router.get(
-  "/:providerId/roles",
+  "/roles",
   authMiddleware.authenticate,
-  ProviderRoleController.getRolesByProvider
+  ProviderRoleController.getRoles
 );
 router.delete(
   "/remove-role",
@@ -130,6 +130,14 @@ router.get(
   "/portofolio-by-location",
   authMiddleware.authenticate,
   ProviderPortofolioController.getPortofolioByCustomerLocation
+);
+
+router.put(
+  "/portofolio/:id",
+  authMiddleware.authenticate,
+  upload.array("media", 1),
+  validate(PortofolioValidation.updatePortofolio),
+  ProviderPortofolioController.updatePortofolio
 );
 
 router.delete(

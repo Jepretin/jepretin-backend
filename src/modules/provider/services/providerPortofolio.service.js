@@ -204,6 +204,62 @@ class ProviderPortofolioService {
     };
   }
 
+  static async updatePortofolio({
+    id,
+    userId,
+    description,
+    mediaType,
+    mediaUrl,
+    mediaId,
+  }) {
+    const provider = await prisma.provider.findUnique({
+      where: { userId },
+      include: { user: true },
+    });
+
+    if (
+      !provider ||
+      !provider.user.isActive ||
+      !provider.user.isVerified ||
+      ["PENDING", "REJECTED"].includes(provider.status)
+    ) {
+      throw new AppError("Anda tidak memiliki akses ke resource ini", 403);
+    }
+
+    const existing = await prisma.providerPortfolio.findUnique({
+      where: { id },
+    });
+
+    if (!existing || existing.deletedAt) {
+      throw new AppError("Portofolio tidak ditemukan", 404);
+    }
+
+    if (existing.providerId !== provider.id) {
+      throw new AppError("Anda tidak berhak memperbarui portofolio ini", 403);
+    }
+
+    const updated = await prisma.providerPortfolio.update({
+      where: { id },
+      data: {
+        description: description ?? existing.description,
+        mediaType: mediaType ?? existing.mediaType,
+        mediaUrl: mediaUrl ?? existing.mediaUrl,
+        mediaId: mediaId ?? existing.mediaId,
+        updatedAt: new Date(),
+      },
+    });
+
+    return {
+      id: updated.id,
+      providerId: provider.id,
+      providerName: provider.user.name,
+      mediaUrl: updated.mediaUrl,
+      mediaType: updated.mediaType,
+      description: updated.description,
+      updatedAt: updated.updatedAt,
+    };
+  }
+
   // Untuk Hapus portofolio provider (Soft Delete)
   static async deletePortofolio(id, userId) {
     const portofolio = await prisma.providerPortfolio.findFirst({

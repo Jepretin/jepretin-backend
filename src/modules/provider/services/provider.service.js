@@ -23,43 +23,79 @@ class ProviderService {
       throw new AppError("Kamu sudah mendaftar, tunggu proses verifikasi", 400);
     }
 
-    const provider = await prisma.provider.create({
-      data: {
+    const acceptedProvider = await prisma.provider.findFirst({
+      where: {
         userId,
-        status: "PENDING",
-        experience,
+        status: "ACCEPTED",
+        deletedAt: null,
       },
     });
 
-    if (roleIds && roleIds.length > 0) {
-      const roleData = roleIds.map((roleId) => ({
-        providerId: provider.id,
-        roleId,
-      }));
-      await prisma.providerRole.createMany({ data: roleData });
+    if (acceptedProvider) {
+      throw new AppError("Kamu sudah terdaftar sebagai Provider", 400);
     }
 
-    const providerWithRelations = await prisma.provider.findUnique({
-      where: { id: provider.id },
-      include: {
-        roles: { include: { role: true } },
-        user: true,
-      },
-    });
+    return await prisma.$transaction(async (tx) => {
+      if (roleIds && roleIds.length > 0) {
+        const validRoles = await tx.role.findMany({
+          where: {
+            id: { in: roleIds },
+            deletedAt: null,
+          },
+          select: { id: true },
+        });
 
-    return {
-      id: providerWithRelations.id,
-      status: providerWithRelations.status,
-      experience: providerWithRelations.experience,
-      name: providerWithRelations.user.name,
-      email: providerWithRelations.user.email,
-      phone: providerWithRelations.user.phone,
-      avatar: providerWithRelations.user.avatar,
-      roles: providerWithRelations.roles.map((r) => ({
-        id: r.role.id,
-        name: r.role.name,
-      })),
-    };
+        const validRoleIds = validRoles.map((r) => r.id);
+
+        const invalidRoles = roleIds.filter((id) => !validRoleIds.includes(id));
+        if (invalidRoles.length > 0) {
+          throw new AppError(
+            `Role dengan ID berikut tidak ditemukan: ${invalidRoles.join(
+              ", "
+            )}`,
+            404
+          );
+        }
+      }
+
+      const provider = await tx.provider.create({
+        data: {
+          userId,
+          status: "PENDING",
+          experience,
+        },
+      });
+
+      if (roleIds && roleIds.length > 0) {
+        const roleData = roleIds.map((roleId) => ({
+          providerId: provider.id,
+          roleId,
+        }));
+        await tx.providerRole.createMany({ data: roleData });
+      }
+
+      const providerWithRelations = await tx.provider.findUnique({
+        where: { id: provider.id },
+        include: {
+          roles: { include: { role: true } },
+          user: true,
+        },
+      });
+
+      return {
+        id: providerWithRelations.id,
+        status: providerWithRelations.status,
+        experience: providerWithRelations.experience,
+        name: providerWithRelations.user.name,
+        email: providerWithRelations.user.email,
+        phone: providerWithRelations.user.phone,
+        avatar: providerWithRelations.user.avatar,
+        roles: providerWithRelations.roles.map((r) => ({
+          id: r.role.id,
+          name: r.role.name,
+        })),
+      };
+    });
   }
 
   static async getAllProvider() {
