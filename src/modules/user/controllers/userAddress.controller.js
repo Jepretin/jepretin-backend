@@ -18,8 +18,8 @@ class UserAddressController {
   });
 
   static getAddressById = handleAsync(async (req, res) => {
-    const userId = req.user.id; // dari middleware auth
-    const { id } = req.params; // ambil dari URL /address/:id
+    const userId = req.user.id;
+    const { id } = req.params;
 
     const result = await UserAddressService.getAddressById({
       userId,
@@ -27,6 +27,37 @@ class UserAddressController {
     });
 
     return success(res, 200, "Alamat ditemukan.", result);
+  });
+
+  static getAllAddress = handleAsync(async (req, res) => {
+    const userId = req.user.id;
+    const address = await UserAddressService.getAllAddress(userId);
+    return success(res, 200, "Daftar Alamat user berhasil diambil.", address);
+  });
+
+  static updateAddress = handleAsync(async (req, res) => {
+    const userId = req.user?.id;
+    const { villageId, addressDetail, isPrimary } = req.body;
+    const addressId = req.params.addressId;
+
+    const result = await UserAddressService.updateAddress({
+      userId,
+      addressId,
+      villageId,
+      addressDetail,
+      isPrimary,
+    });
+
+    return success(res, 200, "Alamat berhasil diperbarui.", result);
+  });
+
+  static deleteAddress = handleAsync(async (req, res) => {
+    const userId = req.user.id;
+    const { id } = req.params;
+
+    const result = await UserAddressService.deleteAddress({ id, userId });
+
+    return success(res, 200, "Alamat berhasil dihapus.", result);
   });
 }
 

@@ -90,6 +90,66 @@ class UserAddressService {
     };
   }
 
+  static async getAllAddress(userId) {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user || !user.isActive || user.deletedAt || !user.isVerified) {
+      throw new AppError("Akun belum terverifikasi", 403);
+    }
+
+    const addresses = await prisma.customerAddress.findMany({
+      where: { userId },
+      include: {
+        village: {
+          include: {
+            district: {
+              include: {
+                regency: {
+                  include: {
+                    province: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!addresses.length) {
+      throw new AppError("Belum ada alamat yang tersimpan", 404);
+    }
+
+    return {
+      message: "Daftar alamat berhasil diambil",
+      data: addresses.map((address) => ({
+        id: address.id,
+        userName: user.name,
+        addressDetail: address.addressDetail,
+        isPrimary: address.isPrimary,
+        createdAt: address.createdAt,
+        village: {
+          id: address.village.id,
+          name: address.village.name,
+          district: {
+            id: address.village.district.id,
+            name: address.village.district.name,
+            regency: {
+              id: address.village.district.regency.id,
+              name: address.village.district.regency.name,
+              province: {
+                id: address.village.district.regency.province.id,
+                name: address.village.district.regency.province.name,
+              },
+            },
+          },
+        },
+      })),
+    };
+  }
+
   static async getAddressById({ userId, addressId }) {
     const user = await prisma.user.findUnique({
       where: { id: userId },
@@ -122,7 +182,6 @@ class UserAddressService {
       throw new AppError("Alamat tidak ditemukan", 404);
     }
 
-    // Pastikan user hanya bisa ambil alamat miliknya sendiri
     if (address.userId !== userId) {
       throw new AppError("Anda tidak memiliki akses ke alamat ini", 403);
     }
@@ -152,6 +211,136 @@ class UserAddressService {
         },
       },
     };
+  }
+
+  static async updateAddress({
+    userId,
+    addressId,
+    villageId,
+    addressDetail,
+    isPrimary,
+  }) {
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user || !user.isActive || user.deletedAt || !user.isVerified) {
+      throw new AppError("Akun belum terverifikasi", 403);
+    }
+
+    const existing = await prisma.customerAddress.findUnique({
+      where: { id: addressId },
+      include: {
+        village: {
+          include: {
+            district: {
+              include: {
+                regency: {
+                  include: { province: true },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!existing || existing.deletedAt) {
+      throw new AppError("Alamat tidak ditemukan", 404);
+    }
+
+    if (existing.userId !== user.id) {
+      throw new AppError("Anda tidak berhak memperbarui alamat ini", 403);
+    }
+
+    if (isPrimary === true) {
+      await prisma.customerAddress.updateMany({
+        where: { userId },
+        data: { isPrimary: false },
+      });
+    }
+
+    const village = await prisma.village.findUnique({
+      where: { id: villageId },
+    });
+
+    if (!village) {
+      throw new AppError("Village ID tidak valid atau tidak ditemukan.", 400);
+    }
+
+    const updated = await prisma.customerAddress.update({
+      where: { id: addressId },
+      data: {
+        villageId: villageId ?? existing.villageId,
+        addressDetail: addressDetail ?? existing.addressDetail,
+        isPrimary: isPrimary ?? existing.isPrimary,
+      },
+      include: {
+        village: {
+          include: {
+            district: {
+              include: {
+                regency: {
+                  include: { province: true },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    return {
+      data: {
+        id: updated.id,
+        userName: user.name,
+        addressDetail: updated.addressDetail,
+        isPrimary: updated.isPrimary,
+        updatedAt: updated.updatedAt,
+        village: {
+          id: updated.village.id,
+          name: updated.village.name,
+          district: {
+            id: updated.village.district.id,
+            name: updated.village.district.name,
+            regency: {
+              id: updated.village.district.regency.id,
+              name: updated.village.district.regency.name,
+              province: {
+                id: updated.village.district.regency.province.id,
+                name: updated.village.district.regency.province.name,
+              },
+            },
+          },
+        },
+      },
+    };
+  }
+
+  static async deleteAddress({ id, userId }) {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user || !user.isActive || user.deletedAt || !user.isVerified) {
+      throw new AppError("Akun belum terverifikasi atau tidak aktif.", 403);
+    }
+
+    const address = await prisma.customerAddress.findFirst({
+      where: {
+        id,
+        userId,
+        deletedAt: null,
+      },
+    });
+
+    if (!address) {
+      throw new AppError("Alamat tidak ditemukan atau bukan milik Anda.", 404);
+    }
+
+    await prisma.customerAddress.update({
+      where: { id },
+      data: { deletedAt: new Date() },
+    });
+
+    return { message: "Alamat berhasil dihapus." };
   }
 }
 

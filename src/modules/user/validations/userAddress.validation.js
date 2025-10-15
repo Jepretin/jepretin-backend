@@ -16,6 +16,21 @@ class UserAddressValidation {
       "boolean.base": "isPrimary harus berupa nilai boolean (true/false).",
     }),
   });
+
+  static updateAddress = Joi.object({
+    villageId: Joi.string().optional().messages({
+      "string.empty": "Village ID tidak boleh kosong.",
+    }),
+
+    addressDetail: Joi.string().min(5).max(255).optional().messages({
+      "string.min": "Detail alamat minimal 5 karakter.",
+      "string.max": "Detail alamat maksimal 255 karakter.",
+    }),
+
+    isPrimary: Joi.boolean().optional().messages({
+      "boolean.base": "isPrimary harus berupa nilai boolean (true/false).",
+    }),
+  });
 }
 
 module.exports = UserAddressValidation;
