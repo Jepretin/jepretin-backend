@@ -200,7 +200,6 @@ model ProviderTopping {
   createdAt         DateTime           @default(now())
   updatedAt         DateTime           @updatedAt
   deletedAt         DateTime?
-  orderItems        OrderItem[]
   orderItemToppings OrderItemTopping[]
   provider          Provider           @relation(fields: [providerId], references: [id])
 
@@ -249,25 +248,23 @@ model Order {
   @@index([providerId])
   @@index([status])
 }
-
 model OrderItem {
-  id        String             @id @default(uuid())
-  orderId   String
-  bundleId  String?
-  toppingId String?
-  price     Decimal            @db.Decimal(12, 2)
-  createdAt DateTime           @default(now())
-  updatedAt DateTime           @updatedAt
-  deletedAt DateTime?
-  bundle    ProviderBundle?    @relation(fields: [bundleId], references: [id])
-  order     Order              @relation(fields: [orderId], references: [id])
-  topping   ProviderTopping?   @relation(fields: [toppingId], references: [id])
-  toppings  OrderItemTopping[]
+  id          String             @id @default(uuid())
+  orderId     String
+  bundleId    String?             
+  price       Decimal             @db.Decimal(12, 2)
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+  deletedAt   DateTime?
+  
+  order       Order               @relation(fields: [orderId], references: [id])
+  bundle      ProviderBundle?     @relation(fields: [bundleId], references: [id])
+  orderItemToppings OrderItemTopping[]
 
   @@index([orderId])
   @@index([bundleId])
-  @@index([toppingId])
 }
+
 
 model OrderItemTopping {
   id          String          @id @default(uuid())
@@ -278,12 +275,14 @@ model OrderItemTopping {
   createdAt   DateTime        @default(now())
   updatedAt   DateTime        @updatedAt
   deletedAt   DateTime?
+
   orderItem   OrderItem       @relation(fields: [orderItemId], references: [id])
   topping     ProviderTopping @relation(fields: [toppingId], references: [id])
 
   @@index([orderItemId])
   @@index([toppingId])
 }
+
 
 model PaymentCategory {
   id          String    @id @default(uuid())
