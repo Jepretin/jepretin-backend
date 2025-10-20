@@ -177,6 +177,68 @@ class OrderService {
       return { data: formatOrderResponse(updatedOrder, user.name) };
     });
   }
+
+  static async getAllOrder(userId) {
+    return await prisma.$transaction(async (tx) => {
+      // Validasi user aktif dan terverifikasi
+      const user = await tx.user.findFirst({
+        where: {
+          id: userId,
+          isActive: true,
+          deletedAt: null,
+          isVerified: true,
+        },
+      });
+      if (!user) throw new AppError("Akun belum terverifikasi", 403);
+
+      // Ambil semua order milik user
+      const orders = await tx.order.findMany({
+        where: {
+          userId,
+          deletedAt: null,
+        },
+        orderBy: { createdAt: "desc" },
+        include: {
+          user: { select: { id: true, name: true } },
+          provider: {
+            select: {
+              id: true,
+              user: { select: { name: true } },
+            },
+          },
+          customerAddress: {
+            include: {
+              village: {
+                include: {
+                  district: {
+                    include: {
+                      regency: { include: { province: true } },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          orderItems: {
+            include: {
+              bundle: true,
+              orderItemToppings: { include: { topping: true } },
+            },
+          },
+        },
+      });
+
+      // Jika kosong
+      if (orders.length === 0) {
+        throw new AppError("Belum ada pesanan yang dibuat", 404);
+      }
+
+      // Format semua order dengan helper
+      const formattedOrders = orders.map((o) => formatOrderResponse(o));
+
+      return { data: formattedOrders };
+    });
+  }
 }
 
 module.exports = OrderService;

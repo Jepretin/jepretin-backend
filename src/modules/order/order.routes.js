@@ -14,4 +14,6 @@ router.post(
   OrderController.addOrder
 );
 
+router.get("/order", authMiddleware.authenticate, OrderController.getAllOrder);
+
 module.exports = router;

@@ -17,6 +17,11 @@ class OrderController {
 
     return success(res, 201, "Order berhasil dibuat.", order);
   });
+
+  static getAllOrder = handleAsync(async (req, res) => {
+    const order = await OrderService.getAllOrder();
+    return success(res, 200, "Daftar Order berhasil diambil.", order);
+  });
 }
 
 module.exports = OrderController;

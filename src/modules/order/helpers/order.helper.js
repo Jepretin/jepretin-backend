@@ -4,8 +4,8 @@ function formatOrderResponse(order, userName) {
   return {
     id: order.id,
     user: {
-      id: order.userId,
-      name: userName || null,
+      id: order.user?.id,
+      name: order.user?.name || null,
     },
     provider: {
       id: order.providerId,
