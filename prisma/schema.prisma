@@ -537,7 +537,6 @@ enum NotificationType {
 enum WalletTransactionType {
   CREDIT
   DEBIT
-  PENDING
   REFUND
   WITHDRAW
 }

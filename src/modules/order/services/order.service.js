@@ -34,7 +34,6 @@ class OrderService {
       });
       if (!address) throw new AppError("Alamat tidak ditemukan", 404);
 
-      // ✅ CEK JANGKAUAN PROVIDER
       const coverage = await tx.providerCoverage.findFirst({
         where: {
           providerId,
@@ -84,10 +83,7 @@ class OrderService {
               price: bundle.price,
             },
           });
-        }
-
-        // Standalone topping
-        else if (item.toppingId) {
+        } else if (item.toppingId) {
           const topping = await tx.providerTopping.findUnique({
             where: { id: item.toppingId },
           });
@@ -237,6 +233,188 @@ class OrderService {
       const formattedOrders = orders.map((o) => formatOrderResponse(o));
 
       return { data: formattedOrders };
+    });
+  }
+
+  static async getOrderById(userId, orderId) {
+    return await prisma.$transaction(async (tx) => {
+      const user = await tx.user.findFirst({
+        where: {
+          id: userId,
+          isActive: true,
+          deletedAt: null,
+          isVerified: true,
+        },
+      });
+      if (!user) throw new AppError("Akun belum terverifikasi", 403);
+
+      const order = await tx.order.findFirst({
+        where: {
+          id: orderId,
+          userId,
+          deletedAt: null,
+        },
+        include: {
+          user: { select: { id: true, name: true } },
+          provider: {
+            select: {
+              id: true,
+              user: { select: { name: true } },
+            },
+          },
+          customerAddress: {
+            include: {
+              village: {
+                include: {
+                  district: {
+                    include: {
+                      regency: { include: { province: true } },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          orderItems: {
+            include: {
+              bundle: true,
+              orderItemToppings: { include: { topping: true } },
+            },
+          },
+        },
+      });
+
+      if (!order) {
+        throw new AppError("Pesanan tidak ditemukan", 404);
+      }
+
+      const formattedOrder = formatOrderResponse(order, user.name);
+
+      return { data: formattedOrder };
+    });
+  }
+
+  static async updateOrderStatus(orderId, status, userId, userRole) {
+    // Validasi role
+    if (userRole !== "ADMIN" && userRole !== "PROVIDER") {
+      throw new AppError(
+        "Hanya admin atau provider yang dapat memperbarui status order",
+        403
+      );
+    }
+
+    return await prisma.$transaction(async (tx) => {
+      // Cek apakah order valid
+      const order = await tx.order.findUnique({
+        where: { id: orderId, deletedAt: null },
+        include: {
+          user: { select: { id: true, name: true } },
+          provider: {
+            select: {
+              id: true,
+              user: { select: { name: true } },
+            },
+          },
+          customerAddress: {
+            include: {
+              village: {
+                include: {
+                  district: {
+                    include: {
+                      regency: { include: { province: true } },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          orderItems: {
+            include: {
+              bundle: true,
+              orderItemToppings: { include: { topping: true } },
+            },
+          },
+        },
+      });
+
+      if (!order) {
+        throw new AppError("Pesanan tidak ditemukan", 404);
+      }
+
+      // Validasi status baru
+      const validStatuses = [
+        "PENDING",
+        "PAID",
+        "IN_PROGRESS",
+        "COMPLETED",
+        "CANCELLED",
+        "EXPIRED",
+        "REFUNDED",
+      ];
+
+      if (!validStatuses.includes(status)) {
+        throw new AppError("Status tidak valid", 400);
+      }
+
+      if (order.status === "COMPLETED" && status !== "REFUNDED") {
+        throw new AppError(
+          "Pesanan yang telah selesai tidak dapat diubah lagi",
+          400
+        );
+      }
+
+      // Update status order
+      const updatedOrder = await tx.order.update({
+        where: { id: orderId },
+        data: { status },
+        include: {
+          user: { select: { id: true, name: true } },
+          provider: {
+            select: {
+              id: true,
+              user: { select: { name: true } },
+            },
+          },
+          customerAddress: {
+            include: {
+              village: {
+                include: {
+                  district: {
+                    include: {
+                      regency: { include: { province: true } },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          orderItems: {
+            include: {
+              bundle: true,
+              orderItemToppings: { include: { topping: true } },
+            },
+          },
+        },
+      });
+
+      // Kirim notifikasi ke customer
+      const notif = await tx.notification.create({
+        data: {
+          userId: order.userId,
+          type: "SYSTEM",
+          message: `Status pesanan Anda diperbarui menjadi ${status}`,
+          isRead: false,
+        },
+      });
+
+      // Format response agar konsisten
+      const formatted = formatOrderResponse(updatedOrder, order.user.name);
+
+      return {
+        message: `Status order berhasil diperbarui menjadi ${status}`,
+        data: formatted,
+        notification: notif,
+      };
     });
   }
 }

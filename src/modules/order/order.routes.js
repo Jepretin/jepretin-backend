@@ -16,4 +16,15 @@ router.post(
 
 router.get("/order", authMiddleware.authenticate, OrderController.getAllOrder);
 
+router.get(
+  "/order/:orderId",
+  authMiddleware.authenticate,
+  OrderController.getOrderById
+);
+
+router.put(
+  "/order/:orderId",
+  authMiddleware.authenticate,
+  OrderController.updateOrderStatus
+);
 module.exports = router;
