@@ -10,7 +10,6 @@ class OrderService {
     eventDateTime,
     items,
   }) {
-    // Jalankan semua dalam transaksi
     return await prisma.$transaction(async (tx) => {
       const user = await tx.user.findFirst({
         where: {
@@ -29,8 +28,27 @@ class OrderService {
 
       const address = await tx.customerAddress.findFirst({
         where: { id: addressId, userId, deletedAt: null },
+        include: {
+          village: { include: { district: true } },
+        },
       });
       if (!address) throw new AppError("Alamat tidak ditemukan", 404);
+
+      // ✅ CEK JANGKAUAN PROVIDER
+      const coverage = await tx.providerCoverage.findFirst({
+        where: {
+          providerId,
+          districtId: address.village.district.id,
+          deletedAt: null,
+        },
+      });
+
+      if (!coverage) {
+        throw new AppError(
+          "Alamat Anda berada di luar jangkauan provider yang dipilih",
+          400
+        );
+      }
 
       // ---- Mulai perhitungan total harga ----
       let totalPrice = 0;
@@ -50,7 +68,7 @@ class OrderService {
         let itemPrice = 0;
         let orderItem;
 
-        // Jika ada bundle
+        // Bundle
         if (item.bundleId) {
           const bundle = await tx.providerBundle.findUnique({
             where: { id: item.bundleId },
@@ -68,7 +86,7 @@ class OrderService {
           });
         }
 
-        // Jika standalone topping
+        // Standalone topping
         else if (item.toppingId) {
           const topping = await tx.providerTopping.findUnique({
             where: { id: item.toppingId },
@@ -95,7 +113,7 @@ class OrderService {
           });
         }
 
-        // Jika ada topping tambahan
+        // Tambahan topping
         if (item.toppings && item.toppings.length > 0) {
           for (const toppingItem of item.toppings) {
             const topping = await tx.providerTopping.findUnique({
@@ -122,14 +140,10 @@ class OrderService {
         totalPrice += itemPrice;
       }
 
-      // Update total price
-      await tx.order.update({
+      // Update total
+      const updatedOrder = await tx.order.update({
         where: { id: order.id },
         data: { totalPrice },
-      });
-
-      const updatedOrder = await tx.order.findUnique({
-        where: { id: order.id },
         include: {
           user: { select: { id: true, name: true } },
           provider: {
@@ -154,9 +168,7 @@ class OrderService {
           orderItems: {
             include: {
               bundle: true,
-              orderItemToppings: {
-                include: { topping: true },
-              },
+              orderItemToppings: { include: { topping: true } },
             },
           },
         },
