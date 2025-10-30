@@ -14,10 +14,21 @@ router.post(
   OrderController.addOrder
 );
 
-router.get("/order", authMiddleware.authenticate, OrderController.getAllOrder);
+router.get(
+  "/all-order",
+  authMiddleware.authenticate,
+  authMiddleware.authorize("ADMIN"),
+  OrderController.getAllOrder
+);
 
 router.get(
   "/order/:orderId",
+  authMiddleware.authenticate,
+  OrderController.getOrderById
+);
+
+router.get(
+  "/my-order",
   authMiddleware.authenticate,
   OrderController.getOrderById
 );

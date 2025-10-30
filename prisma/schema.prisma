@@ -286,20 +286,21 @@ model OrderItemTopping {
 
 model PaymentCategory {
   id          String    @id @default(uuid())
-  name        String    @unique
+  name        String
   description String?
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
   deletedAt   DateTime?
-  payments    Payment[]
+  methods PaymentMethod[]
+
+  @@unique([name, deletedAt])
 }
+
 
 model Payment {
   id            String          @id @default(uuid())
   orderId       String?
-  categoryId    String
   amount        Decimal         @db.Decimal(12, 2)
-  method        String
   transactionId String          @unique
   status        PaymentStatus   @default(PENDING)
   paidAt        DateTime?
@@ -307,13 +308,27 @@ model Payment {
   createdAt     DateTime        @default(now())
   updatedAt     DateTime        @updatedAt
   deletedAt     DateTime?
-  category      PaymentCategory @relation(fields: [categoryId], references: [id])
   order         Order?          @relation(fields: [orderId], references: [id])
 
   @@index([orderId])
-  @@index([categoryId])
   @@index([status])
 }
+
+model PaymentMethod {
+  id          String             @id @default(uuid())
+  name        String
+  provider    String?            
+  categoryId  String
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  deletedAt  DateTime?
+
+  category    PaymentCategory    @relation(fields: [categoryId], references: [id])
+
+
+  @@unique([name, categoryId, deletedAt])
+}
+
 
 model Review {
   id         String    @id @default(uuid())

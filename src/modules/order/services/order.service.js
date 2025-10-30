@@ -294,6 +294,64 @@ class OrderService {
     });
   }
 
+  static async getOrdersByUser(userId) {
+    return await prisma.$transaction(async (tx) => {
+      const user = await tx.user.findFirst({
+        where: {
+          id: userId,
+          isActive: true,
+          deletedAt: null,
+          isVerified: true,
+        },
+      });
+      if (!user) throw new AppError("Akun belum terverifikasi", 403);
+
+      const orders = await tx.order.findMany({
+        where: {
+          userId,
+          deletedAt: null,
+        },
+        include: {
+          user: { select: { id: true, name: true } },
+          provider: {
+            select: {
+              id: true,
+              user: { select: { name: true } },
+            },
+          },
+          customerAddress: {
+            include: {
+              village: {
+                include: {
+                  district: {
+                    include: {
+                      regency: { include: { province: true } },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          orderItems: {
+            include: {
+              bundle: true,
+              orderItemToppings: { include: { topping: true } },
+            },
+          },
+        },
+        orderBy: {
+          createdAt: "desc",
+        },
+      });
+
+      const formattedOrders = orders.map((order) =>
+        formatOrderResponse(order, user.name)
+      );
+
+      return { data: formattedOrders };
+    });
+  }
+
   static async updateOrderStatus(orderId, status, userId, userRole) {
     // Validasi role
     if (userRole !== "ADMIN" && userRole !== "PROVIDER") {
