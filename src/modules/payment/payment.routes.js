@@ -60,4 +60,16 @@ router.post(
   PaymentController.handleWebhook
 );
 
+router.get(
+  "/my-payment",
+  authMiddleware.authenticate,
+  PaymentController.getPaymentsByUser
+);
+
+router.get(
+  "/payment/:id",
+  authMiddleware.authenticate,
+  PaymentController.getPaymentById
+);
+
 module.exports = router;

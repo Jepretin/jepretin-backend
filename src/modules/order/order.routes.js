@@ -30,7 +30,7 @@ router.get(
 router.get(
   "/my-order",
   authMiddleware.authenticate,
-  OrderController.getOrderById
+  OrderController.getOrdersByUser
 );
 
 router.put(

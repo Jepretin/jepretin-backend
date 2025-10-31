@@ -30,7 +30,7 @@ class OrderController {
     return success(res, 200, "Data Order berhasil diambil.", data);
   });
 
-  static getUserOrders = handleAsync(async (req, res) => {
+  static getOrdersByUser = handleAsync(async (req, res) => {
     const userId = req.user.id;
 
     const result = await OrderService.getOrdersByUser(userId);

@@ -161,6 +161,133 @@ class PaymentService {
 
     return { message: "Webhook diterima dan diproses", status: newStatus };
   }
+
+  static async getPaymentsByUser(userId) {
+    return await prisma.$transaction(async (tx) => {
+      const payments = await tx.payment.findMany({
+        where: {
+          deletedAt: null,
+          order: {
+            userId,
+            deletedAt: null,
+          },
+        },
+        include: {
+          order: {
+            select: {
+              status: true,
+              totalPrice: true,
+              createdAt: true,
+            },
+          },
+        },
+        orderBy: { createdAt: "desc" },
+      });
+
+      if (!payments.length)
+        throw new AppError("Belum ada riwayat pembayaran", 404);
+
+      const formatted = payments.map((p) => ({
+        id: p.id,
+        transactionId: p.transactionId,
+        orderId: p.orderId,
+        amount: Number(p.amount),
+        status: p.status,
+        paymentDate: p.paidAt,
+        redirectUrl: p.rawResponse?.redirect_url || null,
+        order: p.order
+          ? {
+              status: p.order.status,
+              totalPrice: Number(p.order.totalPrice),
+              createdAt: p.order.createdAt,
+            }
+          : null,
+      }));
+
+      return formatted;
+    });
+  }
+
+  static async getPaymentById(userId, paymentId) {
+    return await prisma.$transaction(async (tx) => {
+      // Validasi user
+      const user = await tx.user.findFirst({
+        where: {
+          id: userId,
+          isActive: true,
+          deletedAt: null,
+          isVerified: true,
+        },
+      });
+      if (!user) throw new AppError("Akun belum terverifikasi", 403);
+
+      // Ambil detail pembayaran
+      const payment = await tx.payment.findFirst({
+        where: {
+          id: paymentId,
+          deletedAt: null,
+          order: {
+            userId,
+            deletedAt: null,
+          },
+        },
+        include: {
+          order: {
+            select: {
+              id: true,
+              status: true,
+              totalPrice: true,
+              createdAt: true,
+              orderItems: {
+                include: {
+                  bundle: true,
+                  orderItemToppings: { include: { topping: true } },
+                },
+              },
+            },
+          },
+        },
+      });
+
+      if (!payment) throw new AppError("Pembayaran tidak ditemukan", 404);
+
+      // Format response
+      return {
+        id: payment.id,
+        transactionId: payment.transactionId,
+        orderId: payment.orderId,
+        amount: Number(payment.amount),
+        status: payment.status,
+        paymentDate: payment.paidAt,
+        redirectUrl: payment.rawResponse?.redirect_url || null,
+        order: payment.order
+          ? {
+              id: payment.order.id,
+              status: payment.order.status,
+              totalPrice: Number(payment.order.totalPrice),
+              createdAt: payment.order.createdAt,
+              items: payment.order.orderItems.map((item) => ({
+                id: item.id,
+                bundle: item.bundle
+                  ? {
+                      id: item.bundle.id,
+                      name: item.bundle.name,
+                      price: Number(item.bundle.price),
+                    }
+                  : null,
+                price: Number(item.price),
+                toppings: item.orderItemToppings.map((t) => ({
+                  id: t.topping.id,
+                  name: t.topping.name,
+                  price: Number(t.price),
+                  quantity: t.quantity,
+                })),
+              })),
+            }
+          : null,
+      };
+    });
+  }
 }
 
 module.exports = PaymentService;
