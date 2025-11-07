@@ -301,6 +301,9 @@ model Payment {
   id            String          @id @default(uuid())
   orderId       String?
   amount        Decimal         @db.Decimal(12, 2)
+  platformFee Decimal @db.Decimal(12, 2) @default(0)
+  netAmount   Decimal @db.Decimal(12, 2) @default(0)
+  paymentType PaymentType @default(CUSTOMER_PAYMENT)
   transactionId String          @unique
   status        PaymentStatus   @default(PENDING)
   paidAt        DateTime?
@@ -309,6 +312,8 @@ model Payment {
   updatedAt     DateTime        @updatedAt
   deletedAt     DateTime?
   order         Order?          @relation(fields: [orderId], references: [id])
+
+  transactions  WalletTransaction[]
 
   @@index([orderId])
   @@index([status])
@@ -369,6 +374,7 @@ model WalletTransaction {
   id                  String                  @id @default(uuid())
   walletId            String
   orderId             String?
+  paymentId String?
   withdrawalRequestId String?
   amount              Decimal                 @db.Decimal(12, 2)
   type                WalletTransactionType
@@ -382,6 +388,7 @@ model WalletTransaction {
   deletedAt           DateTime?
   order               Order?                  @relation(fields: [orderId], references: [id])
   wallet              Wallet                  @relation(fields: [walletId], references: [id])
+  payment   Payment? @relation(fields: [paymentId], references: [id])
   withdrawalRequest   WithdrawalRequest?      @relation(fields: [withdrawalRequestId], references: [id])
 
   @@index([walletId])
@@ -541,6 +548,13 @@ enum PaymentStatus {
   REFUNDED
 }
 
+enum PaymentType {
+  CUSTOMER_PAYMENT
+  WITHDRAWAL_PAYOUT
+  REFUND
+}
+
+
 enum NotificationType {
   ORDER_STATUS
   PAYMENT
@@ -552,8 +566,6 @@ enum NotificationType {
 enum WalletTransactionType {
   CREDIT
   DEBIT
-  REFUND
-  WITHDRAW
 }
 
 enum WalletTransactionStatus {

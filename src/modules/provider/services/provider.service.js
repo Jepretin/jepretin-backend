@@ -1,5 +1,6 @@
 const prisma = require("../../../services/prisma.service");
 const AppError = require("../../../utils/appError");
+const WalletService = require("../../wallet/services/wallet.service");
 
 class ProviderService {
   static async registerProvider({ userId, experience, roleIds }) {
@@ -203,6 +204,7 @@ class ProviderService {
       },
     };
   }
+
   static async updateStatus(providerId, status, userRole) {
     if (userRole !== "ADMIN") {
       throw new AppError(
@@ -221,7 +223,6 @@ class ProviderService {
     }
 
     const result = await prisma.$transaction(async (tx) => {
-      // Update status provider
       const updatedProvider = await tx.provider.update({
         where: { id: providerId },
         data: { status },
@@ -229,17 +230,41 @@ class ProviderService {
       });
 
       let newUserRole = provider.user.role;
+      let walletData = null;
 
-      // Jika diterima → ubah user.role ke PROVIDER
       if (status === "ACCEPTED") {
         await tx.user.update({
           where: { id: provider.userId },
           data: { role: "PROVIDER" },
         });
         newUserRole = "PROVIDER";
+
+        const existingWallet = await tx.wallet.findFirst({
+          where: { providerId: provider.id, deletedAt: null },
+        });
+
+        if (!existingWallet) {
+          const wallet = await tx.wallet.create({
+            data: {
+              providerId: provider.id,
+              currentBalance: 0,
+              pendingBalance: 0,
+            },
+          });
+
+          walletData = wallet;
+
+          await tx.notification.create({
+            data: {
+              userId: provider.userId,
+              type: "SYSTEM",
+              message: "Akun Anda telah disetujui dan wallet otomatis dibuat.",
+              isRead: false,
+            },
+          });
+        }
       }
 
-      // Kirim notifikasi
       const notif = await tx.notification.create({
         data: {
           userId: provider.userId,
@@ -249,10 +274,10 @@ class ProviderService {
         },
       });
 
-      return { updatedProvider, notif, newUserRole };
+      return { updatedProvider, notif, newUserRole, walletData };
     });
 
-    const { updatedProvider, newUserRole } = result;
+    const { updatedProvider, newUserRole, walletData } = result;
 
     return {
       code: 200,
@@ -265,6 +290,14 @@ class ProviderService {
         experience: updatedProvider.experience,
         newStatus: updatedProvider.status,
         newRole: newUserRole,
+        wallet: walletData
+          ? {
+              id: walletData.id,
+              currentBalance: walletData.currentBalance,
+              pendingBalance: walletData.pendingBalance,
+              currency: walletData.currency,
+            }
+          : "Wallet sudah ada",
         rolesTaken: updatedProvider.roles.map((r) => ({
           id: r.role.id,
           name: r.role.name,

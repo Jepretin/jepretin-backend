@@ -45,7 +45,6 @@ const orderDetailInclude = {
 };
 
 class OrderService {
-  // ✅ Tambah order tetap sama, tapi return pakai formatter detail
   static async addOrder({
     userId,
     providerId,
@@ -176,7 +175,6 @@ class OrderService {
     };
   }
 
-  // ✅ My Orders → hanya summary
   static async getMyOrders(userId) {
     const user = await prisma.user.findFirst({
       where: { id: userId, isActive: true, deletedAt: null, isVerified: true },
@@ -197,7 +195,6 @@ class OrderService {
     };
   }
 
-  // ✅ Detail Order → full include
   static async getOrderById(userId, orderId) {
     const order = await prisma.order.findFirst({
       where: { id: orderId, userId, deletedAt: null },
@@ -211,7 +208,6 @@ class OrderService {
     };
   }
 
-  // ✅ Update Status
   static async updateOrderStatus(orderId, status, userRole) {
     if (!["ADMIN", "PROVIDER"].includes(userRole))
       throw new AppError(
