@@ -9,42 +9,42 @@ const PaymentMethodValidation = require("./validations/paymentMethod.validation"
 
 const router = express.Router();
 
-//Payment Category
-router.post(
-  "/category",
-  authMiddleware.authenticate,
-  authMiddleware.authorize("ADMIN"),
-  PaymentCategoryController.addPaymentCategory
-);
-router.get(
-  "/category",
-  authMiddleware.authenticate,
-  PaymentCategoryController.getPaymentCategory
-);
-router.delete(
-  "/category/:id",
-  authMiddleware.authenticate,
-  PaymentCategoryController.removePaymentCategory
-);
+// //Payment Category
+// router.post(
+//   "/category",
+//   authMiddleware.authenticate,
+//   authMiddleware.authorize("ADMIN"),
+//   PaymentCategoryController.addPaymentCategory
+// );
+// router.get(
+//   "/category",
+//   authMiddleware.authenticate,
+//   PaymentCategoryController.getPaymentCategory
+// );
+// router.delete(
+//   "/category/:id",
+//   authMiddleware.authenticate,
+//   PaymentCategoryController.removePaymentCategory
+// );
 
-//Payment Method
-router.post(
-  "/method",
-  authMiddleware.authenticate,
-  authMiddleware.authorize("ADMIN"),
-  validate(PaymentMethodValidation.createPaymentMethod),
-  PaymentMethodController.addPaymentMethod
-);
-router.get(
-  "/method",
-  authMiddleware.authenticate,
-  PaymentMethodController.getPaymentMethod
-);
-router.delete(
-  "/method/:id",
-  authMiddleware.authenticate,
-  PaymentMethodController.removePaymentMethod
-);
+// //Payment Method
+// router.post(
+//   "/method",
+//   authMiddleware.authenticate,
+//   authMiddleware.authorize("ADMIN"),
+//   validate(PaymentMethodValidation.createPaymentMethod),
+//   PaymentMethodController.addPaymentMethod
+// );
+// router.get(
+//   "/method",
+//   authMiddleware.authenticate,
+//   PaymentMethodController.getPaymentMethod
+// );
+// router.delete(
+//   "/method/:id",
+//   authMiddleware.authenticate,
+//   PaymentMethodController.removePaymentMethod
+// );
 
 //Payment
 router.post(

@@ -36,9 +36,9 @@ class PaymentController {
   });
 
   static getPaymentById = handleAsync(async (req, res) => {
-    const { paymentId } = req.params;
+    const { id } = req.params;
     const userId = req.user.id;
-    const data = await PaymentService.getPaymentById(userId, paymentId);
+    const data = await PaymentService.getPaymentById(userId, id);
 
     return success(res, 200, "Data pembayaran berhasil diambil.", data);
   });

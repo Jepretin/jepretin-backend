@@ -2,17 +2,63 @@
   "openapi": "3.0.3",
   "info": {
     "title": "Jepretin API",
-    "description": "Dokumentasi API untuk Aplikasi JEPRETIN",
-    "version": "1.0.0"
+    "description": "Dokumentasi lengkap API untuk Aplikasi JEPRETIN - Platform Booking Fotografer & Videografer",
+    "version": "1.0.0",
+    "contact": {
+      "name": "Jepretin Support",
+      "email": "support@jepretin.com"
+    }
   },
   "servers": [
     {
       "url": "http://localhost:3000/api",
-      "description": "Local server"
+      "description": "Local Development Server"
     },
     {
       "url": "https://undefensed-misadjusted-venice.ngrok-free.dev/api",
-      "description": "Ngrok server"
+      "description": "Ngrok Tunnel Server"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Auth",
+      "description": "Endpoint untuk autentikasi dan manajemen akun"
+    },
+    {
+      "name": "User",
+      "description": "Manajemen data user"
+    },
+    {
+      "name": "User Address",
+      "description": "Manajemen alamat user"
+    },
+    {
+      "name": "Order",
+      "description": "Manajemen pemesanan layanan provider"
+    },
+    {
+      "name": "Provider",
+      "description": "Manajemen data provider (fotografer/videografer)"
+    },
+    {
+      "name": "Provider Coverage",
+      "description": "Manajemen area coverage provider"
+    },
+    {
+      "name": "Provider Portofolio",
+      "description": "Manajemen portofolio provider"
+    },
+    {
+      "name": "Provider Bundle",
+      "description": "Manajemen paket bundle provider"
+    },
+    {
+      "name": "Provider Topping",
+      "description": "Manajemen tambahan/topping layanan provider"
+    },
+    {
+      "name": "Wilayah",
+      "description": "Data wilayah Indonesia (Provinsi, Kabupaten, Kecamatan, Desa)"
     }
   ],
   "components": {
@@ -20,30 +66,148 @@
       "bearerAuth": {
         "type": "http",
         "scheme": "bearer",
-        "bearerFormat": "JWT"
+        "bearerFormat": "JWT",
+        "description": "Masukkan token JWT yang didapat dari endpoint login"
+      }
+    },
+    "responses": {
+      "UnauthorizedError": {
+        "description": "Token tidak valid, tidak ada, atau sudah expired",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            },
+            "example": {
+              "code": 401,
+              "message": "Unauthorized - Token tidak valid"
+            }
+          }
+        }
+      },
+      "ForbiddenError": {
+        "description": "Akses ditolak - Tidak memiliki permission",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            },
+            "example": {
+              "code": 403,
+              "message": "Forbidden - Anda tidak memiliki akses"
+            }
+          }
+        }
+      },
+      "NotFoundError": {
+        "description": "Resource tidak ditemukan",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            },
+            "example": {
+              "code": 404,
+              "message": "Data tidak ditemukan"
+            }
+          }
+        }
+      },
+      "ValidationError": {
+        "description": "Validasi input gagal",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            },
+            "example": {
+              "code": 400,
+              "message": "Validasi gagal",
+              "errors": ["Email wajib diisi", "Password minimal 6 karakter"]
+            }
+          }
+        }
+      },
+      "ServerError": {
+        "description": "Terjadi kesalahan pada server",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            },
+            "example": {
+              "code": 500,
+              "message": "Internal Server Error"
+            }
+          }
+        }
       }
     },
     "schemas": {
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "integer",
+            "description": "HTTP status code"
+          },
+          "message": {
+            "type": "string",
+            "description": "Pesan error"
+          },
+          "errors": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Detail error (opsional)"
+          }
+        }
+      },
+      "SuccessResponse": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "integer",
+            "description": "HTTP status code"
+          },
+          "message": {
+            "type": "string",
+            "description": "Pesan sukses"
+          },
+          "data": {
+            "description": "Data response"
+          }
+        }
+      },
       "Register": {
         "type": "object",
         "required": ["name", "email", "password"],
         "properties": {
           "name": {
             "type": "string",
-            "example": "John Doe"
+            "minLength": 3,
+            "example": "John Doe",
+            "description": "Nama lengkap user"
           },
           "email": {
             "type": "string",
-            "example": "johndoe@gmail.com"
+            "format": "email",
+            "example": "johndoe@gmail.com",
+            "description": "Email valid untuk login dan notifikasi"
           },
           "password": {
             "type": "string",
             "minLength": 6,
-            "example": "123456"
+            "format": "password",
+            "example": "123456",
+            "description": "Password minimal 6 karakter"
           },
           "phone": {
             "type": "string",
-            "example": "081234567890"
+            "pattern": "^08[0-9]{8,11}$",
+            "example": "081234567890",
+            "description": "Nomor telepon (opsional)"
           }
         }
       },
@@ -53,10 +217,12 @@
         "properties": {
           "email": {
             "type": "string",
+            "format": "email",
             "example": "johndoe@gmail.com"
           },
           "password": {
             "type": "string",
+            "format": "password",
             "example": "123456"
           }
         }
@@ -67,7 +233,9 @@
         "properties": {
           "email": {
             "type": "string",
-            "example": "johndoe@gmail.com"
+            "format": "email",
+            "example": "johndoe@gmail.com",
+            "description": "Email terdaftar untuk menerima link reset password"
           }
         }
       },
@@ -77,15 +245,21 @@
         "properties": {
           "token": {
             "type": "string",
-            "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+            "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+            "description": "Token reset password dari email"
           },
           "password": {
             "type": "string",
-            "example": "newPassword123"
+            "format": "password",
+            "minLength": 6,
+            "example": "newPassword123",
+            "description": "Password baru minimal 6 karakter"
           },
           "confirmPassword": {
             "type": "string",
-            "example": "newPassword123"
+            "format": "password",
+            "example": "newPassword123",
+            "description": "Konfirmasi password (harus sama dengan password)"
           }
         }
       },
@@ -95,11 +269,14 @@
         "properties": {
           "email": {
             "type": "string",
+            "format": "email",
             "example": "johndoe@gmail.com"
           },
           "otpCode": {
             "type": "string",
-            "example": "123456"
+            "pattern": "^[0-9]{6}$",
+            "example": "123456",
+            "description": "Kode OTP 6 digit yang dikirim ke email"
           }
         }
       },
@@ -109,6 +286,7 @@
         "properties": {
           "email": {
             "type": "string",
+            "format": "email",
             "example": "johndoe@gmail.com"
           }
         }
@@ -118,11 +296,341 @@
         "properties": {
           "name": {
             "type": "string",
+            "minLength": 3,
             "example": "Updated Name"
           },
           "phone": {
             "type": "string",
+            "pattern": "^08[0-9]{8,11}$",
             "example": "081298765432"
+          }
+        }
+      },
+      "UserAddressCreate": {
+        "type": "object",
+        "required": ["villageId", "addressDetail"],
+        "properties": {
+          "villageId": {
+            "type": "string",
+            "example": "3518020001",
+            "description": "ID kelurahan/desa dari data wilayah"
+          },
+          "addressDetail": {
+            "type": "string",
+            "minLength": 5,
+            "maxLength": 255,
+            "example": "Jl. Merdeka No. 123, RT 02 RW 05",
+            "description": "Detail alamat lengkap (5-255 karakter)"
+          },
+          "isPrimary": {
+            "type": "boolean",
+            "default": false,
+            "example": true,
+            "description": "Set sebagai alamat utama"
+          }
+        }
+      },
+      "UserAddressUpdate": {
+        "type": "object",
+        "properties": {
+          "villageId": {
+            "type": "string",
+            "example": "3518020001"
+          },
+          "addressDetail": {
+            "type": "string",
+            "minLength": 5,
+            "maxLength": 255,
+            "example": "Jl. Sudirman No. 456, RT 03 RW 02"
+          },
+          "isPrimary": {
+            "type": "boolean",
+            "example": false
+          }
+        }
+      },
+      "UserAddressDetail": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "userName": {
+            "type": "string"
+          },
+          "addressDetail": {
+            "type": "string"
+          },
+          "isPrimary": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "village": {
+            "$ref": "#/components/schemas/Village"
+          }
+        }
+      },
+      "OrderItemInput": {
+        "type": "object",
+        "properties": {
+          "bundleId": {
+            "type": "string",
+            "format": "uuid",
+            "example": "550e8400-e29b-41d4-a716-446655440000",
+            "description": "ID bundle yang dipesan (opsional jika hanya topping)"
+          },
+          "toppingId": {
+            "type": "string",
+            "format": "uuid",
+            "example": "660e8400-e29b-41d4-a716-446655440001",
+            "description": "ID topping standalone (opsional)"
+          },
+          "quantity": {
+            "type": "integer",
+            "minimum": 1,
+            "default": 1,
+            "example": 1,
+            "description": "Jumlah item"
+          },
+          "toppings": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["toppingId", "quantity"],
+              "properties": {
+                "toppingId": {
+                  "type": "string",
+                  "format": "uuid",
+                  "example": "770e8400-e29b-41d4-a716-446655440002"
+                },
+                "quantity": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "default": 1,
+                  "example": 2
+                }
+              }
+            },
+            "description": "Daftar topping tambahan untuk bundle"
+          }
+        }
+      },
+      "OrderCreate": {
+        "type": "object",
+        "required": ["providerId", "addressId", "eventDateTime", "items"],
+        "properties": {
+          "providerId": {
+            "type": "string",
+            "format": "uuid",
+            "example": "550e8400-e29b-41d4-a716-446655440000",
+            "description": "ID provider yang dipilih"
+          },
+          "addressId": {
+            "type": "string",
+            "format": "uuid",
+            "example": "660e8400-e29b-41d4-a716-446655440001",
+            "description": "ID alamat customer untuk lokasi acara"
+          },
+          "eventDateTime": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2024-12-31T10:00:00Z",
+            "description": "Tanggal dan waktu acara (harus di masa depan)"
+          },
+          "items": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "$ref": "#/components/schemas/OrderItemInput"
+            },
+            "description": "Daftar item yang dipesan (minimal 1 item)"
+          }
+        }
+      },
+      "OrderUpdateStatus": {
+        "type": "object",
+        "required": ["status"],
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "PENDING",
+              "ACCEPTED",
+              "REJECTED",
+              "COMPLETED",
+              "CANCELLED"
+            ],
+            "example": "ACCEPTED",
+            "description": "Status order (ADMIN: semua status, PROVIDER: ACCEPTED/REJECTED, CUSTOMER: CANCELLED)"
+          }
+        }
+      },
+      "OrderItemTopping": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string",
+            "example": "Extra Drone Footage"
+          },
+          "price": {
+            "type": "number",
+            "example": 500000
+          },
+          "quantity": {
+            "type": "integer",
+            "example": 1
+          }
+        }
+      },
+      "OrderItem": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "bundle": {
+            "type": "object",
+            "nullable": true,
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "name": {
+                "type": "string",
+                "example": "Wedding Premium Package"
+              },
+              "price": {
+                "type": "number",
+                "example": 15000000
+              }
+            }
+          },
+          "price": {
+            "type": "number",
+            "example": 15000000,
+            "description": "Harga item (bundle atau topping standalone)"
+          },
+          "toppings": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OrderItemTopping"
+            }
+          }
+        }
+      },
+      "OrderAddress": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "detail": {
+            "type": "string",
+            "example": "Jl. Merdeka No. 123, RT 02 RW 05"
+          },
+          "village": {
+            "type": "string",
+            "example": "Kelurahan Mojoroto"
+          },
+          "district": {
+            "type": "string",
+            "example": "Kecamatan Mojoroto"
+          },
+          "regency": {
+            "type": "string",
+            "example": "Kota Kediri"
+          },
+          "province": {
+            "type": "string",
+            "example": "Jawa Timur"
+          }
+        }
+      },
+      "OrderDetail": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "user": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "name": {
+                "type": "string",
+                "example": "John Doe"
+              }
+            }
+          },
+          "provider": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "name": {
+                "type": "string",
+                "example": "Jane Photography"
+              }
+            }
+          },
+          "address": {
+            "$ref": "#/components/schemas/OrderAddress"
+          },
+          "eventDateTime": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2024-12-31T10:00:00Z"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "PENDING",
+              "ACCEPTED",
+              "REJECTED",
+              "COMPLETED",
+              "CANCELLED"
+            ],
+            "example": "PENDING"
+          },
+          "totalPrice": {
+            "type": "number",
+            "example": 16000000,
+            "description": "Total harga order (bundle + toppings)"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OrderItem"
+            }
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
           }
         }
       },
@@ -134,7 +642,7 @@
             "type": "string",
             "format": "uri",
             "example": "https://drive.google.com/file/d/abc123xyz/view",
-            "description": "Link portofolio atau pengalaman (Google Drive, ImageKit, dll.)"
+            "description": "Link portofolio/pengalaman (Google Drive, ImageKit, dll)"
           },
           "roles": {
             "type": "array",
@@ -143,10 +651,8 @@
               "format": "uuid"
             },
             "minItems": 1,
-            "example": [
-              "550e8400-e29b-41d4-a716-446655440000",
-              "660e8400-e29b-41d4-a716-446655440001"
-            ]
+            "example": ["550e8400-e29b-41d4-a716-446655440000"],
+            "description": "Array ID role provider (minimal 1)"
           }
         }
       },
@@ -157,8 +663,7 @@
           "experience": {
             "type": "string",
             "format": "uri",
-            "example": "https://drive.google.com/file/d/updated-portfolio-xyz/view",
-            "description": "Link portofolio terbaru (Google Drive, ImageKit, dll.)"
+            "example": "https://drive.google.com/file/d/updated-portfolio/view"
           }
         }
       },
@@ -170,12 +675,103 @@
             "type": "string",
             "enum": ["PENDING", "ACCEPTED", "REJECTED"],
             "example": "ACCEPTED",
-            "description": "Status provider (khusus ADMIN)"
+            "description": "Status verifikasi provider (khusus admin)"
+          }
+        }
+      },
+      "ProviderResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "experience": {
+            "type": "string",
+            "format": "uri"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["PENDING", "ACCEPTED", "REJECTED"]
+          },
+          "roles": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "RoleResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string",
+            "example": "Photographer"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "CoverageInput": {
+        "type": "object",
+        "required": ["districtId"],
+        "properties": {
+          "districtId": {
+            "type": "string",
+            "example": "3518020",
+            "description": "ID kecamatan yang dicakup provider"
+          }
+        }
+      },
+      "Coverage": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "districtId": {
+            "type": "string"
+          },
+          "userId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "district": {
+            "$ref": "#/components/schemas/District"
           }
         }
       },
       "AddPortofolio": {
         "type": "object",
+        "required": ["media"],
         "properties": {
           "media": {
             "type": "array",
@@ -183,120 +779,49 @@
               "type": "string",
               "format": "binary"
             },
-            "description": "File portofolio yang diupload (maksimal 10 file)"
+            "maxItems": 10,
+            "description": "File media (maksimal 10 file)"
           },
           "mediaType": {
             "type": "string",
-            "example": "image/video"
+            "enum": ["image", "video"],
+            "example": "image"
           },
           "description": {
             "type": "string",
-            "example": "Hasil foto pernikahan di Surabaya",
-            "description": "Deskripsi singkat portofolio (opsional, maksimal 255 karakter)"
+            "maxLength": 255,
+            "example": "Hasil foto pernikahan di Surabaya"
           }
         }
       },
-      "GetPortofolioByLocationResponse": {
+      "PortofolioDetail": {
         "type": "object",
         "properties": {
-          "code": { "type": "integer", "example": 200 },
-          "message": {
+          "id": {
             "type": "string",
-            "example": "Berhasil mendapatkan portofolio sesuai lokasi."
+            "format": "uuid"
           },
-          "data": {
-            "type": "object",
-            "properties": {
-              "totalProviders": { "type": "integer", "example": 3 },
-              "providers": {
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "properties": {
-                    "providerId": {
-                      "type": "string",
-                      "example": "b0aa28ca-8f5e-49fd-9827-65854ec15259"
-                    },
-                    "providerName": {
-                      "type": "string",
-                      "example": "Uwak Uwik"
-                    },
-                    "providerAvatar": {
-                      "type": "string",
-                      "example": "https://ik.imagekit.io/kevinvin/avatars/uwak.jpg"
-                    },
-                    "totalPortfolios": { "type": "integer", "example": 5 },
-                    "portfolios": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "id": {
-                            "type": "string",
-                            "example": "b0aa28ca-8f5e-49fd-9827-65854ec15259"
-                          },
-                          "mediaUrl": {
-                            "type": "string",
-                            "example": "https://ik.imagekit.io/kevinvin/jepretin/portofolio/foto1.jpg"
-                          },
-                          "mediaType": { "type": "string", "example": "image" },
-                          "description": {
-                            "type": "string",
-                            "example": "Pernikahan di Bandung 2025"
-                          },
-                          "createdAt": {
-                            "type": "string",
-                            "format": "date-time",
-                            "example": "2025-10-07T06:51:23.303Z"
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      },
-      "SuccessResponse": {
-        "type": "object",
-        "properties": {
-          "code": { "type": "integer", "example": 201 },
-          "message": {
+          "providerId": {
             "type": "string",
-            "example": "Berhasil menambahkan portofolio."
+            "format": "uuid"
           },
-          "data": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "properties": {
-                "id": {
-                  "type": "string",
-                  "example": "b0aa28ca-8f5e-49fd-9827-65854ec15259"
-                },
-                "providerId": {
-                  "type": "string",
-                  "example": "728b61bb-8dfd-4b31-80ed-aed64654e335"
-                },
-                "providerName": { "type": "string", "example": "uwak uwik" },
-                "mediaUrl": {
-                  "type": "string",
-                  "example": "https://ik.imagekit.io/kevinvin/jepretin/portofolio/IMG_4682_uBehfrPs6.JPG"
-                },
-                "mediaType": {
-                  "type": "string",
-                  "enum": ["image", "video"],
-                  "example": "image"
-                },
-                "description": {
-                  "type": "string",
-                  "example": "Photographer in event wedding."
-                },
-                "createdAt": { "type": "string", "format": "date-time" }
-              }
-            }
+          "providerName": {
+            "type": "string"
+          },
+          "mediaUrl": {
+            "type": "string",
+            "format": "uri"
+          },
+          "mediaType": {
+            "type": "string",
+            "enum": ["image", "video"]
+          },
+          "description": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
           }
         }
       },
@@ -310,54 +835,89 @@
           },
           "description": {
             "type": "string",
-            "example": "Bundle foto pre-wedding dan wedding day dengan dokumentasi video."
+            "example": "Bundle foto pre-wedding dan wedding day"
           },
           "price": {
             "type": "number",
-            "example": 15000000
+            "minimum": 0,
+            "example": 15000000,
+            "description": "Harga dalam Rupiah"
           }
         }
       },
       "ProviderBundleUpdate": {
         "type": "object",
         "properties": {
-          "name": { "type": "string", "example": "Wedding Gold Package" },
+          "name": {
+            "type": "string",
+            "example": "Wedding Gold Package"
+          },
           "description": {
             "type": "string",
             "example": "Paket foto dan video eksklusif"
           },
-          "price": { "type": "number", "example": 18000000 }
+          "price": {
+            "type": "number",
+            "minimum": 0,
+            "example": 18000000
+          }
         }
       },
       "ProviderToppingCreate": {
         "type": "object",
         "required": ["name", "description", "price"],
         "properties": {
-          "name": { "type": "string", "example": "Extra Drone Footage" },
+          "name": {
+            "type": "string",
+            "example": "Extra Drone Footage"
+          },
           "description": {
             "type": "string",
             "example": "Tambahan dokumentasi aerial menggunakan drone"
           },
-          "price": { "type": "number", "example": 500000 },
-          "isStandalone": { "type": "boolean", "example": false },
+          "price": {
+            "type": "number",
+            "minimum": 0,
+            "example": 500000
+          },
+          "isStandalone": {
+            "type": "boolean",
+            "default": false,
+            "example": false,
+            "description": "Apakah topping bisa dipesan tanpa bundle"
+          },
           "bundleId": {
             "type": "string",
+            "format": "uuid",
             "example": "a2d5b6d1-5e3b-4a8e-bb82-efa4e5f98c45",
-            "description": "ID bundle yang terhubung (wajib jika isStandalone = false)"
+            "description": "ID bundle terkait (wajib jika isStandalone = false)"
           }
         }
       },
       "ProviderToppingUpdate": {
         "type": "object",
         "properties": {
-          "name": { "type": "string", "example": "Extra Photo Session" },
+          "name": {
+            "type": "string",
+            "example": "Extra Photo Session"
+          },
           "description": {
             "type": "string",
             "example": "Tambahan 1 jam sesi foto"
           },
-          "price": { "type": "number", "example": 250000 },
-          "isStandalone": { "type": "boolean", "example": true },
-          "bundleId": { "type": "string", "example": "uuid-optional" }
+          "price": {
+            "type": "number",
+            "minimum": 0,
+            "example": 250000
+          },
+          "isStandalone": {
+            "type": "boolean",
+            "example": true
+          },
+          "bundleId": {
+            "type": "string",
+            "format": "uuid"
+          }
         }
       },
       "Province": {
@@ -405,151 +965,19 @@
           }
         }
       },
-      "Provider": {
+      "Village": {
         "type": "object",
         "properties": {
           "id": {
             "type": "string",
-            "format": "uuid",
-            "example": "f2a31b90-5e4a-4d1f-8226-9b1f2c7c5678"
-          },
-          "userId": {
-            "type": "string",
-            "format": "uuid",
-            "example": "a1b2c3d4-5e6f-7g8h-9i0j-k1l2m3n4o5p6"
-          },
-          "experience": {
-            "type": "string",
-            "format": "uri",
-            "example": "https://drive.google.com/file/d/abc123xyz/view"
-          },
-          "status": {
-            "type": "string",
-            "enum": ["PENDING", "ACCEPTED", "REJECTED"],
-            "example": "ACCEPTED"
-          },
-          "roles": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "example": ["Photographer", "Videographer"]
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time",
-            "example": "2025-09-27T12:34:56.789Z"
-          },
-          "updatedAt": {
-            "type": "string",
-            "format": "date-time",
-            "example": "2025-09-27T15:20:10.123Z"
-          }
-        }
-      },
-      "ProviderResponse": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid",
-            "example": "f2a31b90-5e4a-4d1f-8226-9b1f2c7c5678"
-          },
-          "experience": {
-            "type": "string",
-            "format": "uri",
-            "example": "https://drive.google.com/file/d/abc123xyz/view"
-          },
-          "status": {
-            "type": "string",
-            "enum": ["PENDING", "ACCEPTED", "REJECTED"],
-            "example": "ACCEPTED"
-          },
-          "roles": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "example": ["Photographer", "Videographer"]
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time",
-            "example": "2025-09-27T12:34:56.789Z"
-          },
-          "updatedAt": {
-            "type": "string",
-            "format": "date-time",
-            "example": "2025-09-27T15:20:10.123Z"
-          }
-        }
-      },
-      "RoleResponse": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid",
-            "example": "b0d4c29e-9139-4a89-8f2f-12345b6a1f8a"
+            "example": "3518020001"
           },
           "name": {
             "type": "string",
-            "example": "Photographer"
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time",
-            "example": "2025-09-27T12:34:56.789Z"
-          },
-          "updatedAt": {
-            "type": "string",
-            "format": "date-time",
-            "example": "2025-09-27T15:20:10.123Z"
-          }
-        }
-      },
-      "Coverage": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid",
-            "example": "c4f1d8f4-7a5a-4b25-9e1f-83d8d8c6eabc"
-          },
-          "districtId": {
-            "type": "string",
-            "example": "3518020"
-          },
-          "userId": {
-            "type": "string",
-            "format": "uuid",
-            "example": "f2a31b90-5e4a-4d1f-8226-9b1f2c7c5678"
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time",
-            "example": "2025-09-27T12:34:56.789Z"
-          },
-          "updatedAt": {
-            "type": "string",
-            "format": "date-time",
-            "example": "2025-09-27T12:34:56.789Z"
+            "example": "Kelurahan Mojoroto"
           },
           "district": {
             "$ref": "#/components/schemas/District"
-          },
-          "provider": {
-            "$ref": "#/components/schemas/Provider"
-          }
-        }
-      },
-      "CoverageInput": {
-        "type": "object",
-        "required": ["districtId"],
-        "properties": {
-          "districtId": {
-            "type": "string",
-            "example": "3518020"
           }
         }
       }
@@ -560,6 +988,7 @@
       "post": {
         "tags": ["Auth"],
         "summary": "Register user baru",
+        "description": "Mendaftarkan user baru dan mengirim OTP ke email untuk verifikasi",
         "requestBody": {
           "required": true,
           "content": {
@@ -574,8 +1003,11 @@
           "201": {
             "description": "Registrasi berhasil, OTP dikirim ke email"
           },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
           "409": {
-            "description": "Email sudah digunakan"
+            "description": "Email sudah terdaftar"
           }
         }
       }
@@ -584,6 +1016,7 @@
       "post": {
         "tags": ["Auth"],
         "summary": "Login user",
+        "description": "Login menggunakan email dan password, mendapatkan JWT token",
         "requestBody": {
           "required": true,
           "content": {
@@ -596,7 +1029,36 @@
         },
         "responses": {
           "200": {
-            "description": "Login berhasil, token JWT dikembalikan"
+            "description": "Login berhasil",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "integer",
+                      "example": 200
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Login berhasil"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "token": {
+                          "type": "string",
+                          "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                        },
+                        "user": {
+                          "type": "object"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
           },
           "401": {
             "description": "Email atau password salah"
@@ -607,7 +1069,8 @@
     "/auth/logout": {
       "post": {
         "tags": ["Auth"],
-        "summary": "Logout user (Blacklist Token)",
+        "summary": "Logout user",
+        "description": "Logout dan blacklist token JWT",
         "security": [
           {
             "bearerAuth": []
@@ -615,10 +1078,10 @@
         ],
         "responses": {
           "200": {
-            "description": "Logout berhasil, token di-blacklist"
+            "description": "Logout berhasil"
           },
           "401": {
-            "description": "Token tidak valid atau tidak ada"
+            "$ref": "#/components/responses/UnauthorizedError"
           }
         }
       }
@@ -627,6 +1090,7 @@
       "post": {
         "tags": ["Auth"],
         "summary": "Verifikasi OTP",
+        "description": "Verifikasi kode OTP yang dikirim ke email",
         "requestBody": {
           "required": true,
           "content": {
@@ -651,6 +1115,7 @@
       "post": {
         "tags": ["Auth"],
         "summary": "Kirim ulang OTP",
+        "description": "Mengirim ulang kode OTP ke email",
         "requestBody": {
           "required": true,
           "content": {
@@ -664,6 +1129,9 @@
         "responses": {
           "200": {
             "description": "OTP baru berhasil dikirim"
+          },
+          "404": {
+            "description": "Email tidak ditemukan"
           }
         }
       }
@@ -671,7 +1139,8 @@
     "/auth/forgot-password": {
       "post": {
         "tags": ["Auth"],
-        "summary": "Lupa password - kirim link reset ke email",
+        "summary": "Lupa password",
+        "description": "Mengirim link reset password ke email",
         "requestBody": {
           "required": true,
           "content": {
@@ -687,7 +1156,7 @@
             "description": "Link reset password dikirim ke email"
           },
           "404": {
-            "description": "User tidak ditemukan"
+            "description": "Email tidak terdaftar"
           }
         }
       }
@@ -695,7 +1164,8 @@
     "/auth/reset-password": {
       "post": {
         "tags": ["Auth"],
-        "summary": "Reset password menggunakan token",
+        "summary": "Reset password",
+        "description": "Reset password menggunakan token dari email",
         "requestBody": {
           "required": true,
           "content": {
@@ -719,7 +1189,8 @@
     "/user/all-user": {
       "get": {
         "tags": ["User"],
-        "summary": "Ambil semua user (Admin Only)",
+        "summary": "Get semua user",
+        "description": "Mengambil daftar semua user (khusus admin)",
         "security": [
           {
             "bearerAuth": []
@@ -728,6 +1199,12 @@
         "responses": {
           "200": {
             "description": "Daftar user berhasil diambil"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
           }
         }
       }
@@ -735,7 +1212,8 @@
     "/user/get-user": {
       "get": {
         "tags": ["User"],
-        "summary": "Ambil detail user yang sedang login",
+        "summary": "Get detail user",
+        "description": "Mengambil detail user yang sedang login",
         "security": [
           {
             "bearerAuth": []
@@ -744,6 +1222,9 @@
         "responses": {
           "200": {
             "description": "User ditemukan"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
           }
         }
       }
@@ -751,7 +1232,8 @@
     "/user/update-user": {
       "put": {
         "tags": ["User"],
-        "summary": "Edit data user",
+        "summary": "Update user",
+        "description": "Mengupdate data user yang sedang login",
         "security": [
           {
             "bearerAuth": []
@@ -770,6 +1252,12 @@
         "responses": {
           "200": {
             "description": "User berhasil diperbarui"
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
           }
         }
       }
@@ -777,7 +1265,8 @@
     "/user/delete-user": {
       "delete": {
         "tags": ["User"],
-        "summary": "Hapus user",
+        "summary": "Delete user",
+        "description": "Menghapus user yang sedang login",
         "security": [
           {
             "bearerAuth": []
@@ -786,14 +1275,49 @@
         "responses": {
           "200": {
             "description": "User berhasil dihapus"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
           }
         }
       }
     },
-    "/provider/all-provider": {
+    "/user/address": {
+      "post": {
+        "tags": ["User Address"],
+        "summary": "Tambah alamat",
+        "description": "Menambahkan alamat baru untuk user",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserAddressCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Berhasil menambahkan alamat"
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          }
+        }
+      },
       "get": {
-        "tags": ["Provider"],
-        "summary": "Ambil semua provider (Admin only)",
+        "tags": ["User Address"],
+        "summary": "Get semua alamat",
+        "description": "Mengambil semua alamat milik user",
         "security": [
           {
             "bearerAuth": []
@@ -801,28 +1325,227 @@
         ],
         "responses": {
           "200": {
-            "description": "Daftar provider berhasil diambil",
+            "description": "Daftar alamat berhasil diambil"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          }
+        }
+      }
+    },
+    "/user/address/{id}": {
+      "get": {
+        "tags": ["User Address"],
+        "summary": "Get alamat by ID",
+        "description": "Mengambil detail alamat berdasarkan ID",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "ID alamat"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Alamat ditemukan"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          }
+        }
+      },
+      "delete": {
+        "tags": ["User Address"],
+        "summary": "Delete alamat",
+        "description": "Menghapus alamat berdasarkan ID",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "ID alamat"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Alamat berhasil dihapus"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          }
+        }
+      }
+    },
+    "/user/address/{addressId}": {
+      "put": {
+        "tags": ["User Address"],
+        "summary": "Update alamat",
+        "description": "Mengupdate alamat berdasarkan ID",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "addressId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "ID alamat"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserAddressUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Alamat berhasil diperbarui"
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          }
+        }
+      }
+    },
+    "/order/order": {
+      "post": {
+        "tags": ["Order"],
+        "summary": "Buat order baru",
+        "description": "Customer membuat order baru dengan memilih provider, alamat, tanggal acara, dan items (bundle/topping)",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OrderCreate"
+              },
+              "examples": {
+                "order_with_bundle_and_toppings": {
+                  "summary": "Order dengan bundle dan topping",
+                  "value": {
+                    "providerId": "550e8400-e29b-41d4-a716-446655440000",
+                    "addressId": "660e8400-e29b-41d4-a716-446655440001",
+                    "eventDateTime": "2024-12-31T10:00:00Z",
+                    "items": [
+                      {
+                        "bundleId": "770e8400-e29b-41d4-a716-446655440002",
+                        "quantity": 1,
+                        "toppings": [
+                          {
+                            "toppingId": "880e8400-e29b-41d4-a716-446655440003",
+                            "quantity": 2
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                },
+                "order_standalone_topping": {
+                  "summary": "Order topping standalone",
+                  "value": {
+                    "providerId": "550e8400-e29b-41d4-a716-446655440000",
+                    "addressId": "660e8400-e29b-41d4-a716-446655440001",
+                    "eventDateTime": "2024-12-31T14:00:00Z",
+                    "items": [
+                      {
+                        "toppingId": "990e8400-e29b-41d4-a716-446655440004",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Order berhasil dibuat",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ProviderResponse"
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "integer",
+                      "example": 201
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Order berhasil dibuat."
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/OrderDetail"
+                    }
                   }
                 }
               }
             }
           },
-          "403": {
-            "description": "Forbidden"
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "description": "Provider, alamat, bundle, atau topping tidak ditemukan"
           }
         }
       }
     },
-    "/provider/get-provider": {
+    "/order/all-order": {
       "get": {
-        "tags": ["Provider"],
-        "summary": "Ambil data provider milik user login",
+        "tags": ["Order"],
+        "summary": "Get semua order",
+        "description": "Mengambil daftar semua order dari semua user (khusus admin)",
         "security": [
           {
             "bearerAuth": []
@@ -830,17 +1553,265 @@
         ],
         "responses": {
           "200": {
-            "description": "Provider ditemukan",
+            "description": "Daftar order berhasil diambil",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ProviderResponse"
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "integer",
+                      "example": 200
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Daftar Order berhasil diambil."
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/OrderDetail"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          }
+        }
+      }
+    },
+    "/order/order/{orderId}": {
+      "get": {
+        "tags": ["Order"],
+        "summary": "Get detail order",
+        "description": "Mengambil detail order berdasarkan ID. User hanya bisa melihat order miliknya sendiri",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "orderId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "ID order",
+            "example": "550e8400-e29b-41d4-a716-446655440000"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Data order berhasil diambil",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "integer",
+                      "example": 200
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Data Order berhasil diambil."
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/OrderDetail"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "description": "Tidak memiliki akses ke order ini"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          }
+        }
+      },
+      "put": {
+        "tags": ["Order"],
+        "summary": "Update status order",
+        "description": "Mengupdate status order. Akses berbeda berdasarkan role: ADMIN (semua status), PROVIDER (ACCEPTED/REJECTED), CUSTOMER (CANCELLED)",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "orderId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "ID order",
+            "example": "550e8400-e29b-41d4-a716-446655440000"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OrderUpdateStatus"
+              },
+              "examples": {
+                "provider_accept": {
+                  "summary": "Provider menerima order",
+                  "value": {
+                    "status": "ACCEPTED"
+                  }
+                },
+                "provider_reject": {
+                  "summary": "Provider menolak order",
+                  "value": {
+                    "status": "REJECTED"
+                  }
+                },
+                "customer_cancel": {
+                  "summary": "Customer membatalkan order",
+                  "value": {
+                    "status": "CANCELLED"
+                  }
+                },
+                "admin_complete": {
+                  "summary": "Admin menandai order selesai",
+                  "value": {
+                    "status": "COMPLETED"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Status order berhasil diperbarui",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "integer",
+                      "example": 200
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Status order berhasil diperbarui"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string",
+                          "example": "Order berhasil diterima"
+                        },
+                        "order": {
+                          "$ref": "#/components/schemas/OrderDetail"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Status tidak valid atau transisi status tidak diizinkan",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "code": 400,
+                  "message": "Transisi status tidak valid"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "description": "Tidak memiliki akses untuk mengupdate status ini",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "code": 403,
+                  "message": "Anda tidak memiliki akses untuk mengupdate status ini"
                 }
               }
             }
           },
           "404": {
-            "description": "Provider tidak ditemukan"
+            "$ref": "#/components/responses/NotFoundError"
+          }
+        }
+      }
+    },
+    "/order/my-order": {
+      "get": {
+        "tags": ["Order"],
+        "summary": "Get order saya",
+        "description": "Mengambil daftar semua order milik user yang sedang login",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Daftar pesanan berhasil diambil",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "integer",
+                      "example": 200
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Daftar pesanan berhasil diambil"
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/OrderDetail"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
           }
         }
       }
@@ -848,7 +1819,8 @@
     "/provider/roles": {
       "get": {
         "tags": ["Provider"],
-        "summary": "Ambil data roles untuk provider.",
+        "summary": "Get semua roles",
+        "description": "Mengambil daftar role provider (Photographer, Videographer, dll)",
         "security": [
           {
             "bearerAuth": []
@@ -856,17 +1828,10 @@
         ],
         "responses": {
           "200": {
-            "description": "Role ditemukan",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/RoleResponse"
-                }
-              }
-            }
+            "description": "Daftar role berhasil diambil"
           },
-          "404": {
-            "description": "Roles tidak ditemukan"
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
           }
         }
       }
@@ -875,6 +1840,7 @@
       "post": {
         "tags": ["Provider"],
         "summary": "Registrasi provider",
+        "description": "Mendaftarkan user sebagai provider",
         "security": [
           {
             "bearerAuth": []
@@ -891,18 +1857,60 @@
           }
         },
         "responses": {
-          "200": {
-            "description": "Provider berhasil diregistrasi",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProviderResponse"
-                }
-              }
-            }
+          "201": {
+            "description": "Provider berhasil diregistrasi"
           },
           "400": {
-            "description": "Bad Request"
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          }
+        }
+      }
+    },
+    "/provider/all-provider": {
+      "get": {
+        "tags": ["Provider"],
+        "summary": "Get semua provider",
+        "description": "Mengambil daftar semua provider (khusus admin)",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Daftar provider berhasil diambil"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          }
+        }
+      }
+    },
+    "/provider/get-provider": {
+      "get": {
+        "tags": ["Provider"],
+        "summary": "Get detail provider",
+        "description": "Mengambil data provider milik user yang login",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Provider ditemukan"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
           }
         }
       }
@@ -910,7 +1918,8 @@
     "/provider/update-provider": {
       "put": {
         "tags": ["Provider"],
-        "summary": "Update experience provider milik user login",
+        "summary": "Update experience provider",
+        "description": "Mengupdate link experience/portofolio provider",
         "security": [
           {
             "bearerAuth": []
@@ -928,17 +1937,16 @@
         },
         "responses": {
           "200": {
-            "description": "Experience berhasil diperbarui",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProviderResponse"
-                }
-              }
-            }
+            "description": "Experience berhasil diperbarui"
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
           },
           "404": {
-            "description": "Provider tidak ditemukan"
+            "$ref": "#/components/responses/NotFoundError"
           }
         }
       }
@@ -946,7 +1954,8 @@
     "/provider/update-status/{id}": {
       "put": {
         "tags": ["Provider"],
-        "summary": "Update status provider (Admin only)",
+        "summary": "Update status provider",
+        "description": "Mengupdate status verifikasi provider (khusus admin)",
         "security": [
           {
             "bearerAuth": []
@@ -961,7 +1970,7 @@
               "type": "string",
               "format": "uuid"
             },
-            "example": "f2a31b90-5e4a-4d1f-8226-9b1f2c7c5678"
+            "description": "ID provider"
           }
         ],
         "requestBody": {
@@ -976,20 +1985,19 @@
         },
         "responses": {
           "200": {
-            "description": "Status provider berhasil diperbarui",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProviderResponse"
-                }
-              }
-            }
+            "description": "Status provider berhasil diperbarui"
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
           },
           "403": {
-            "description": "Forbidden"
+            "$ref": "#/components/responses/ForbiddenError"
           },
           "404": {
-            "description": "Provider tidak ditemukan"
+            "$ref": "#/components/responses/NotFoundError"
           }
         }
       }
@@ -997,7 +2005,8 @@
     "/provider/delete-provider": {
       "delete": {
         "tags": ["Provider"],
-        "summary": "Hapus provider milik user login",
+        "summary": "Delete provider",
+        "description": "Menghapus data provider milik user yang login",
         "security": [
           {
             "bearerAuth": []
@@ -1007,8 +2016,11 @@
           "200": {
             "description": "Provider berhasil dihapus"
           },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
           "404": {
-            "description": "Provider tidak ditemukan"
+            "$ref": "#/components/responses/NotFoundError"
           }
         }
       }
@@ -1016,7 +2028,8 @@
     "/provider/coverage": {
       "post": {
         "tags": ["Provider Coverage"],
-        "summary": "Tambah coverage baru untuk provider login",
+        "summary": "Tambah coverage",
+        "description": "Menambahkan area coverage untuk provider",
         "security": [
           {
             "bearerAuth": []
@@ -1034,26 +2047,20 @@
         },
         "responses": {
           "201": {
-            "description": "Coverage berhasil ditambahkan",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Coverage"
-                }
-              }
-            }
+            "description": "Coverage berhasil ditambahkan"
           },
           "400": {
-            "description": "Bad Request (validasi gagal)"
+            "$ref": "#/components/responses/ValidationError"
           },
-          "404": {
-            "description": "Provider tidak ditemukan"
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
           }
         }
       },
       "get": {
         "tags": ["Provider Coverage"],
-        "summary": "Ambil daftar coverage milik provider login",
+        "summary": "Get coverage provider",
+        "description": "Mengambil daftar coverage milik provider yang login",
         "security": [
           {
             "bearerAuth": []
@@ -1061,20 +2068,10 @@
         ],
         "responses": {
           "200": {
-            "description": "Daftar coverage provider",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/Coverage"
-                  }
-                }
-              }
-            }
+            "description": "Daftar coverage berhasil diambil"
           },
-          "404": {
-            "description": "Provider tidak ditemukan"
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
           }
         }
       }
@@ -1082,7 +2079,8 @@
     "/provider/coverage/{districtId}": {
       "get": {
         "tags": ["Provider Coverage"],
-        "summary": "Cari provider berdasarkan districtId",
+        "summary": "Cari provider by district",
+        "description": "Mencari provider berdasarkan ID kecamatan",
         "security": [
           {
             "bearerAuth": []
@@ -1101,26 +2099,20 @@
         ],
         "responses": {
           "200": {
-            "description": "Daftar provider di distrik ini",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/Provider"
-                  }
-                }
-              }
-            }
+            "description": "Daftar provider di kecamatan ini"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
           },
           "404": {
-            "description": "Distrik tidak ditemukan"
+            "$ref": "#/components/responses/NotFoundError"
           }
         }
       },
       "delete": {
         "tags": ["Provider Coverage"],
-        "summary": "Hapus coverage milik provider login untuk districtId tertentu",
+        "summary": "Delete coverage",
+        "description": "Menghapus coverage berdasarkan district ID",
         "security": [
           {
             "bearerAuth": []
@@ -1141,8 +2133,11 @@
           "200": {
             "description": "Coverage berhasil dihapus"
           },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
           "404": {
-            "description": "Coverage tidak ditemukan"
+            "$ref": "#/components/responses/NotFoundError"
           }
         }
       }
@@ -1150,8 +2145,13 @@
     "/provider/portofolio": {
       "post": {
         "tags": ["Provider Portofolio"],
-        "summary": "Upload portofolio baru untuk provider login (maksimal 10 file)",
-        "security": [{ "bearerAuth": [] }],
+        "summary": "Upload portofolio",
+        "description": "Upload media portofolio (maksimal 10 file)",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -1164,368 +2164,25 @@
         },
         "responses": {
           "201": {
-            "description": "Berhasil menambahkan portofolio",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SuccessResponse"
-                }
-              }
-            }
+            "description": "Portofolio berhasil ditambahkan"
           },
-          "400": { "description": "Validasi gagal" },
-          "401": { "description": "Token tidak valid atau tidak disertakan" },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
           "403": {
-            "description": "Provider belum terverifikasi atau tidak aktif"
-          },
-          "500": { "description": "Kesalahan server" }
+            "description": "Provider belum terverifikasi"
+          }
         }
       }
     },
     "/provider/all-portofolio": {
       "get": {
         "tags": ["Provider Portofolio"],
-        "summary": "Ambil semua portofolio dari seluruh provider (khusus admin)",
-        "security": [{ "bearerAuth": [] }],
-        "responses": {
-          "200": {
-            "description": "Berhasil mengambil semua portofolio",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SuccessResponse"
-                }
-              }
-            }
-          },
-          "401": { "description": "Unauthorized" },
-          "403": { "description": "Hanya admin yang dapat mengakses" },
-          "500": { "description": "Server Error" }
-        }
-      }
-    },
-    "/provider/my-portofolio": {
-      "get": {
-        "tags": ["Provider Portofolio"],
-        "summary": "Ambil semua portofolio milik provider yang sedang login",
-        "security": [{ "bearerAuth": [] }],
-        "responses": {
-          "200": {
-            "description": "Berhasil mendapatkan portofolio provider login",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SuccessResponse"
-                }
-              }
-            }
-          },
-          "404": { "description": "Portofolio tidak ditemukan" },
-          "401": { "description": "Unauthorized" },
-          "500": { "description": "Server Error" }
-        }
-      }
-    },
-    "/provider/get-portofolio/{providerId}": {
-      "get": {
-        "tags": ["Provider Portofolio"],
-        "summary": "Ambil semua portofolio milik provider tertentu (customer view)",
-        "security": [{ "bearerAuth": [] }],
-        "parameters": [
-          {
-            "name": "providerId",
-            "in": "path",
-            "required": true,
-            "schema": { "type": "string" },
-            "description": "ID provider yang ingin dilihat portofolionya"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Berhasil mendapatkan portofolio provider",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SuccessResponse"
-                }
-              }
-            }
-          },
-          "404": { "description": "Provider atau portofolio tidak ditemukan" },
-          "401": { "description": "Unauthorized" },
-          "500": { "description": "Server Error" }
-        }
-      }
-    },
-    "/provider/portofolio-by-location": {
-      "get": {
-        "tags": ["Provider Portofolio"],
-        "summary": "Ambil portofolio provider berdasarkan lokasi customer (districtId dari alamat utama)",
-        "security": [{ "bearerAuth": [] }],
-        "responses": {
-          "200": {
-            "description": "Berhasil mendapatkan portofolio sesuai lokasi.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/GetPortofolioByLocationResponse"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Alamat utama pelanggan tidak ditemukan atau tidak ada provider di lokasi tersebut."
-          },
-          "401": { "description": "Token tidak valid atau tidak disertakan." },
-          "500": { "description": "Terjadi kesalahan server." }
-        }
-      }
-    },
-    "/provider/portofolio/{id}": {
-      "delete": {
-        "tags": ["Provider Portofolio"],
-        "summary": "Hapus portofolio berdasarkan ID (soft delete)",
-        "security": [{ "bearerAuth": [] }],
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": { "type": "string" },
-            "description": "ID portofolio yang ingin dihapus"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Berhasil menghapus portofolio",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SuccessResponse"
-                }
-              }
-            }
-          },
-          "404": { "description": "Portofolio tidak ditemukan" },
-          "401": { "description": "Unauthorized" },
-          "500": { "description": "Server Error" }
-        }
-      }
-    },
-    "/provider/bundle": {
-      "post": {
-        "tags": ["Provider Bundle"],
-        "summary": "Tambah bundle baru",
-        "security": [{ "bearerAuth": [] }],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": { "$ref": "#/components/schemas/ProviderBundleCreate" }
-            }
-          }
-        },
-        "responses": {
-          "201": { "description": "Provider bundle berhasil ditambahkan" },
-          "400": { "description": "Validasi gagal" },
-          "401": { "description": "Unauthorized" },
-          "500": { "description": "Server Error" }
-        }
-      }
-    },
-    "/provider/all-bundle": {
-      "get": {
-        "tags": ["Provider Bundle"],
-        "summary": "Ambil semua provider bundle (publik)",
-        "security": [{ "bearerAuth": [] }],
-        "responses": {
-          "200": { "description": "Berhasil mendapatkan semua bundle" },
-          "500": { "description": "Server Error" }
-        }
-      }
-    },
-    "/provider/my-bundle": {
-      "get": {
-        "tags": ["Provider Bundle"],
-        "summary": "Ambil semua bundle milik provider saat ini",
-        "security": [{ "bearerAuth": [] }],
-        "responses": {
-          "200": { "description": "Berhasil mendapatkan bundle milik Anda" },
-          "401": { "description": "Unauthorized" }
-        }
-      }
-    },
-    "/provider/bundle/{providerId}": {
-      "get": {
-        "tags": ["Provider Bundle"],
-        "summary": "Ambil semua bundle berdasarkan providerId",
-        "security": [{ "bearerAuth": [] }],
-        "parameters": [
-          {
-            "name": "providerId",
-            "in": "path",
-            "required": true,
-            "schema": { "type": "string" }
-          }
-        ],
-        "responses": {
-          "200": { "description": "Berhasil mendapatkan bundle provider" },
-          "404": { "description": "Provider tidak ditemukan" }
-        }
-      }
-    },
-    "/provider/bundle/{id}": {
-      "put": {
-        "tags": ["Provider Bundle"],
-        "summary": "Perbarui bundle berdasarkan ID",
-        "security": [{ "bearerAuth": [] }],
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": { "type": "string" }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": { "$ref": "#/components/schemas/ProviderBundleUpdate" }
-            }
-          }
-        },
-        "responses": {
-          "200": { "description": "Bundle berhasil diperbarui" },
-          "403": { "description": "Tidak memiliki akses" },
-          "404": { "description": "Bundle tidak ditemukan" }
-        }
-      },
-      "delete": {
-        "tags": ["Provider Bundle"],
-        "summary": "Hapus bundle berdasarkan ID (soft delete)",
-        "security": [{ "bearerAuth": [] }],
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": { "type": "string" }
-          }
-        ],
-        "responses": {
-          "200": { "description": "Bundle berhasil dihapus" },
-          "404": { "description": "Bundle tidak ditemukan" }
-        }
-      }
-    },
-    "/provider/topping": {
-      "post": {
-        "tags": ["Provider Topping"],
-        "summary": "Tambah topping baru",
-        "security": [{ "bearerAuth": [] }],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": { "$ref": "#/components/schemas/ProviderToppingCreate" }
-            }
-          }
-        },
-        "responses": {
-          "201": { "description": "Provider topping berhasil ditambahkan" },
-          "400": { "description": "Validasi gagal" },
-          "401": { "description": "Unauthorized" }
-        }
-      }
-    },
-    "/provider/all-topping": {
-      "get": {
-        "tags": ["Provider Topping"],
-        "summary": "Ambil semua topping dari semua provider",
-        "security": [{ "bearerAuth": [] }],
-        "responses": {
-          "200": { "description": "Berhasil mendapatkan semua topping" }
-        }
-      }
-    },
-    "/provider/my-topping": {
-      "get": {
-        "tags": ["Provider Topping"],
-        "summary": "Ambil topping milik provider saat ini",
-        "security": [{ "bearerAuth": [] }],
-        "responses": {
-          "200": { "description": "Berhasil mendapatkan topping milik Anda" }
-        }
-      }
-    },
-    "/provider/topping/{providerId}": {
-      "get": {
-        "tags": ["Provider Topping"],
-        "summary": "Ambil semua topping berdasarkan providerId",
-        "security": [{ "bearerAuth": [] }],
-        "parameters": [
-          {
-            "name": "providerId",
-            "in": "path",
-            "required": true,
-            "schema": { "type": "string" }
-          }
-        ],
-        "responses": {
-          "200": { "description": "Berhasil mendapatkan topping provider" },
-          "404": { "description": "Provider tidak ditemukan" }
-        }
-      }
-    },
-    "/provider/topping/{id}": {
-      "put": {
-        "tags": ["Provider Topping"],
-        "summary": "Perbarui topping berdasarkan ID",
-        "security": [{ "bearerAuth": [] }],
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": { "type": "string" }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": { "$ref": "#/components/schemas/ProviderToppingUpdate" }
-            }
-          }
-        },
-        "responses": {
-          "200": { "description": "Provider topping berhasil diperbarui" },
-          "404": { "description": "Topping tidak ditemukan" }
-        }
-      },
-      "delete": {
-        "tags": ["Provider Topping"],
-        "summary": "Hapus topping berdasarkan ID (soft delete)",
-        "security": [{ "bearerAuth": [] }],
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": { "type": "string" }
-          }
-        ],
-        "responses": {
-          "200": { "description": "Topping berhasil dihapus" },
-          "404": { "description": "Topping tidak ditemukan" }
-        }
-      }
-    },
-    "/wilayah/provinces": {
-      "get": {
-        "tags": ["Wilayah"],
-        "summary": "Ambil semua data provinsi",
+        "summary": "Get semua portofolio",
+        "description": "Mengambil semua portofolio dari semua provider (khusus admin)",
         "security": [
           {
             "bearerAuth": []
@@ -1533,7 +2190,521 @@
         ],
         "responses": {
           "200": {
-            "description": "Berhasil mengambil data provinsi"
+            "description": "Daftar portofolio berhasil diambil"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          }
+        }
+      }
+    },
+    "/provider/my-portofolio": {
+      "get": {
+        "tags": ["Provider Portofolio"],
+        "summary": "Get portofolio saya",
+        "description": "Mengambil portofolio milik provider yang login",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Portofolio berhasil diambil"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          }
+        }
+      }
+    },
+    "/provider/get-portofolio/{providerId}": {
+      "get": {
+        "tags": ["Provider Portofolio"],
+        "summary": "Get portofolio provider",
+        "description": "Mengambil portofolio provider tertentu (customer view)",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "providerId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "ID provider"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Portofolio berhasil diambil"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          }
+        }
+      }
+    },
+    "/provider/portofolio-by-location": {
+      "get": {
+        "tags": ["Provider Portofolio"],
+        "summary": "Get portofolio by lokasi customer",
+        "description": "Mengambil portofolio provider berdasarkan lokasi alamat utama customer",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Portofolio berhasil diambil"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "description": "Alamat utama tidak ditemukan atau tidak ada provider di lokasi"
+          }
+        }
+      }
+    },
+    "/provider/portofolio/{id}": {
+      "delete": {
+        "tags": ["Provider Portofolio"],
+        "summary": "Delete portofolio",
+        "description": "Menghapus portofolio berdasarkan ID (soft delete)",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "ID portofolio"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Portofolio berhasil dihapus"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          }
+        }
+      }
+    },
+    "/provider/bundle": {
+      "post": {
+        "tags": ["Provider Bundle"],
+        "summary": "Tambah bundle",
+        "description": "Menambahkan paket bundle baru",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProviderBundleCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Bundle berhasil ditambahkan"
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          }
+        }
+      }
+    },
+    "/provider/all-bundle": {
+      "get": {
+        "tags": ["Provider Bundle"],
+        "summary": "Get semua bundle",
+        "description": "Mengambil semua bundle dari semua provider",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Daftar bundle berhasil diambil"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          }
+        }
+      }
+    },
+    "/provider/my-bundle": {
+      "get": {
+        "tags": ["Provider Bundle"],
+        "summary": "Get bundle saya",
+        "description": "Mengambil bundle milik provider yang login",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Bundle berhasil diambil"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          }
+        }
+      }
+    },
+    "/provider/bundle/{providerId}": {
+      "get": {
+        "tags": ["Provider Bundle"],
+        "summary": "Get bundle by provider",
+        "description": "Mengambil semua bundle berdasarkan provider ID",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "providerId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Bundle berhasil diambil"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          }
+        }
+      }
+    },
+    "/provider/bundle/{id}": {
+      "put": {
+        "tags": ["Provider Bundle"],
+        "summary": "Update bundle",
+        "description": "Mengupdate bundle berdasarkan ID",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProviderBundleUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Bundle berhasil diperbarui"
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Provider Bundle"],
+        "summary": "Delete bundle",
+        "description": "Menghapus bundle berdasarkan ID (soft delete)",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Bundle berhasil dihapus"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          }
+        }
+      }
+    },
+    "/provider/topping": {
+      "post": {
+        "tags": ["Provider Topping"],
+        "summary": "Tambah topping",
+        "description": "Menambahkan topping/layanan tambahan",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProviderToppingCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Topping berhasil ditambahkan"
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          }
+        }
+      }
+    },
+    "/provider/all-topping": {
+      "get": {
+        "tags": ["Provider Topping"],
+        "summary": "Get semua topping",
+        "description": "Mengambil semua topping dari semua provider",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Daftar topping berhasil diambil"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          }
+        }
+      }
+    },
+    "/provider/my-topping": {
+      "get": {
+        "tags": ["Provider Topping"],
+        "summary": "Get topping saya",
+        "description": "Mengambil topping milik provider yang login",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Topping berhasil diambil"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          }
+        }
+      }
+    },
+    "/provider/topping/{providerId}": {
+      "get": {
+        "tags": ["Provider Topping"],
+        "summary": "Get topping by provider",
+        "description": "Mengambil semua topping berdasarkan provider ID",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "providerId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Topping berhasil diambil"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          }
+        }
+      }
+    },
+    "/provider/topping/{id}": {
+      "put": {
+        "tags": ["Provider Topping"],
+        "summary": "Update topping",
+        "description": "Mengupdate topping berdasarkan ID",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProviderToppingUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Topping berhasil diperbarui"
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Provider Topping"],
+        "summary": "Delete topping",
+        "description": "Menghapus topping berdasarkan ID (soft delete)",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Topping berhasil dihapus"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          }
+        }
+      }
+    },
+    "/wilayah/provinces": {
+      "get": {
+        "tags": ["Wilayah"],
+        "summary": "Get semua provinsi",
+        "description": "Mengambil daftar semua provinsi di Indonesia",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Daftar provinsi berhasil diambil"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
           }
         }
       }
@@ -1541,7 +2712,8 @@
     "/wilayah/regencies/{provinceId}": {
       "get": {
         "tags": ["Wilayah"],
-        "summary": "Ambil semua kabupaten/kota berdasarkan ID provinsi",
+        "summary": "Get kabupaten/kota by provinsi",
+        "description": "Mengambil daftar kabupaten/kota berdasarkan ID provinsi",
         "security": [
           {
             "bearerAuth": []
@@ -1555,12 +2727,19 @@
             "schema": {
               "type": "string"
             },
-            "example": "35"
+            "example": "35",
+            "description": "ID Provinsi"
           }
         ],
         "responses": {
           "200": {
-            "description": "Berhasil mengambil data kabupaten/kota"
+            "description": "Daftar kabupaten/kota berhasil diambil"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
           }
         }
       }
@@ -1568,7 +2747,8 @@
     "/wilayah/districts/{regencyId}": {
       "get": {
         "tags": ["Wilayah"],
-        "summary": "Ambil semua kecamatan berdasarkan ID kabupaten/kota",
+        "summary": "Get kecamatan by kabupaten",
+        "description": "Mengambil daftar kecamatan berdasarkan ID kabupaten/kota",
         "security": [
           {
             "bearerAuth": []
@@ -1582,12 +2762,19 @@
             "schema": {
               "type": "string"
             },
-            "example": "3578"
+            "example": "3578",
+            "description": "ID Kabupaten/Kota"
           }
         ],
         "responses": {
           "200": {
-            "description": "Berhasil mengambil data kecamatan"
+            "description": "Daftar kecamatan berhasil diambil"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
           }
         }
       }
@@ -1595,7 +2782,8 @@
     "/wilayah/villages/{districtId}": {
       "get": {
         "tags": ["Wilayah"],
-        "summary": "Ambil semua desa berdasarkan ID kecamatan",
+        "summary": "Get desa/kelurahan by kecamatan",
+        "description": "Mengambil daftar desa/kelurahan berdasarkan ID kecamatan",
         "security": [
           {
             "bearerAuth": []
@@ -1609,12 +2797,19 @@
             "schema": {
               "type": "string"
             },
-            "example": "3578010"
+            "example": "3578010",
+            "description": "ID Kecamatan"
           }
         ],
         "responses": {
           "200": {
-            "description": "Berhasil mengambil data desa"
+            "description": "Daftar desa/kelurahan berhasil diambil"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
           }
         }
       }
