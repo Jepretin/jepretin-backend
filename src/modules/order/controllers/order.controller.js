@@ -33,7 +33,7 @@ class OrderController {
   static getOrdersByUser = handleAsync(async (req, res) => {
     const userId = req.user.id;
 
-    const result = await OrderService.getOrdersByUser(userId);
+    const result = await OrderService.getMyOrders(userId);
 
     return success(res, 200, "Daftar pesanan berhasil diambil", result);
   });

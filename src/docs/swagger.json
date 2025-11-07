@@ -37,8 +37,12 @@
       "description": "Manajemen pemesanan layanan provider"
     },
     {
+      "name": "Payment",
+      "description": "Manajemen pembayaran order menggunakan payment gateway"
+    },
+    {
       "name": "Provider",
-      "description": "Manajemen data provider (fotografer/videografer)"
+      "description": "Manajemen data provider (fotografer/videografer/MUA)"
     },
     {
       "name": "Provider Coverage",
@@ -623,6 +627,206 @@
             "items": {
               "$ref": "#/components/schemas/OrderItem"
             }
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "MyOrderSummary": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "example": "32b69ae6-df7f-4939-baec-63bd27795cee"
+          },
+          "provider": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid",
+                "example": "728b61bb-8dfd-4b31-80ed-aed64654e335"
+              },
+              "name": {
+                "type": "string",
+                "example": "uwak uwik"
+              }
+            }
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "PENDING",
+              "PAID",
+              "IN_PROGRESS",
+              "COMPLETED",
+              "CANCELLED",
+              "EXPIRED",
+              "REFUNDED"
+            ],
+            "example": "PAID"
+          },
+          "totalPrice": {
+            "type": "number",
+            "example": 150000,
+            "description": "Total harga pesanan"
+          },
+          "eventDateTime": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2025-12-02T10:00:00.000Z"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2025-10-30T14:39:58.094Z"
+          }
+        }
+      },
+      "PaymentCreate": {
+        "type": "object",
+        "required": ["orderId"],
+        "properties": {
+          "orderId": {
+            "type": "string",
+            "format": "uuid",
+            "example": "550e8400-e29b-41d4-a716-446655440000",
+            "description": "ID order yang akan dibayar"
+          }
+        }
+      },
+      "PaymentWebhook": {
+        "type": "object",
+        "description": "Payload webhook dari payment gateway (Midtrans)",
+        "properties": {
+          "transaction_status": {
+            "type": "string",
+            "example": "settlement",
+            "description": "Status transaksi dari payment gateway"
+          },
+          "order_id": {
+            "type": "string",
+            "example": "ORDER-1234567890",
+            "description": "ID order dari sistem"
+          },
+          "gross_amount": {
+            "type": "string",
+            "example": "150000.00",
+            "description": "Total amount pembayaran"
+          },
+          "payment_type": {
+            "type": "string",
+            "example": "bank_transfer",
+            "description": "Tipe pembayaran yang digunakan"
+          },
+          "transaction_time": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2024-11-07 14:30:00",
+            "description": "Waktu transaksi"
+          },
+          "signature_key": {
+            "type": "string",
+            "example": "abc123def456...",
+            "description": "Signature untuk verifikasi webhook"
+          }
+        }
+      },
+      "PaymentDetail": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "example": "660e8400-e29b-41d4-a716-446655440001"
+          },
+          "orderId": {
+            "type": "string",
+            "format": "uuid",
+            "example": "550e8400-e29b-41d4-a716-446655440000"
+          },
+          "userId": {
+            "type": "string",
+            "format": "uuid",
+            "example": "770e8400-e29b-41d4-a716-446655440002"
+          },
+          "amount": {
+            "type": "number",
+            "example": 16000000,
+            "description": "Total amount pembayaran"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["PENDING", "PAID", "FAILED", "EXPIRED", "CANCELLED"],
+            "example": "PENDING",
+            "description": "Status pembayaran"
+          },
+          "paymentMethod": {
+            "type": "string",
+            "example": "bank_transfer",
+            "description": "Metode pembayaran yang dipilih"
+          },
+          "paymentUrl": {
+            "type": "string",
+            "format": "uri",
+            "example": "https://app.midtrans.com/snap/v2/vtweb/abc123",
+            "description": "URL untuk melakukan pembayaran"
+          },
+          "transactionId": {
+            "type": "string",
+            "example": "ORDER-1234567890-MIDTRANS",
+            "description": "ID transaksi dari payment gateway"
+          },
+          "expiredAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2024-11-08T14:30:00Z",
+            "description": "Waktu kadaluarsa pembayaran"
+          },
+          "paidAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "example": "2024-11-07T15:00:00Z",
+            "description": "Waktu pembayaran berhasil (null jika belum dibayar)"
+          },
+          "order": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "status": {
+                "type": "string",
+                "example": "PENDING"
+              },
+              "totalPrice": {
+                "type": "number",
+                "example": 16000000
+              },
+              "provider": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "name": {
+                    "type": "string",
+                    "example": "Jane Photography"
+                  }
+                }
+              }
+            },
+            "description": "Detail order terkait"
           },
           "createdAt": {
             "type": "string",
@@ -1802,7 +2006,7 @@
                     "data": {
                       "type": "array",
                       "items": {
-                        "$ref": "#/components/schemas/OrderDetail"
+                        "$ref": "#/components/schemas/MyOrderSummary"
                       }
                     }
                   }
@@ -1812,6 +2016,412 @@
           },
           "401": {
             "$ref": "#/components/responses/UnauthorizedError"
+          }
+        }
+      }
+    },
+    "/payment/payment": {
+      "post": {
+        "tags": ["Payment"],
+        "summary": "Buat pembayaran baru",
+        "description": "Membuat pembayaran untuk order yang sudah dibuat. Akan menghasilkan payment URL dari payment gateway (Midtrans)",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PaymentCreate"
+              },
+              "example": {
+                "orderId": "550e8400-e29b-41d4-a716-446655440000"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Pembayaran berhasil dibuat",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "integer",
+                      "example": 201
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "pembayaran berhasil"
+                    },
+                    "data": {
+                      "allOf": [
+                        {
+                          "$ref": "#/components/schemas/PaymentDetail"
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "snapToken": {
+                              "type": "string",
+                              "example": "abc123-def456-ghi789",
+                              "description": "Token untuk Snap Midtrans (untuk client-side)"
+                            }
+                          }
+                        }
+                      ]
+                    }
+                  }
+                },
+                "example": {
+                  "code": 201,
+                  "message": "pembayaran berhasil",
+                  "data": {
+                    "id": "660e8400-e29b-41d4-a716-446655440001",
+                    "orderId": "550e8400-e29b-41d4-a716-446655440000",
+                    "userId": "770e8400-e29b-41d4-a716-446655440002",
+                    "amount": 16000000,
+                    "status": "PENDING",
+                    "paymentUrl": "https://app.midtrans.com/snap/v2/vtweb/abc123",
+                    "snapToken": "abc123-def456-ghi789",
+                    "transactionId": "ORDER-1234567890-MIDTRANS",
+                    "expiredAt": "2024-11-08T14:30:00Z",
+                    "createdAt": "2024-11-07T14:30:00Z",
+                    "updatedAt": "2024-11-07T14:30:00Z"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Order tidak valid atau sudah memiliki pembayaran aktif",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "already_paid": {
+                    "summary": "Order sudah dibayar",
+                    "value": {
+                      "code": 400,
+                      "message": "Order sudah memiliki pembayaran aktif"
+                    }
+                  },
+                  "invalid_status": {
+                    "summary": "Status order tidak valid",
+                    "value": {
+                      "code": 400,
+                      "message": "Order harus dalam status ACCEPTED untuk melakukan pembayaran"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "description": "Order tidak ditemukan",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "code": 404,
+                  "message": "Order tidak ditemukan"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/payment/webhook": {
+      "post": {
+        "tags": ["Payment"],
+        "summary": "Webhook payment gateway",
+        "description": "Endpoint untuk menerima notifikasi dari payment gateway (Midtrans). Endpoint ini akan memverifikasi signature dan memperbarui status pembayaran",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PaymentWebhook"
+              },
+              "example": {
+                "transaction_status": "settlement",
+                "order_id": "ORDER-1234567890",
+                "gross_amount": "16000000.00",
+                "payment_type": "bank_transfer",
+                "transaction_time": "2024-11-07 15:00:00",
+                "signature_key": "abc123def456ghi789jkl012mno345pqr678stu901vwx234yz"
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "x-callback-signature",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Signature untuk verifikasi webhook (alternatif 1)"
+          },
+          {
+            "name": "x-midtrans-signature",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Signature untuk verifikasi webhook (alternatif 2)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Webhook berhasil diproses",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "integer",
+                      "example": 200
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Webhook diproses"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "status": {
+                          "type": "string",
+                          "example": "PAID"
+                        },
+                        "payment": {
+                          "$ref": "#/components/schemas/PaymentDetail"
+                        }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "code": 200,
+                  "message": "Webhook diproses",
+                  "data": {
+                    "status": "PAID",
+                    "payment": {
+                      "id": "660e8400-e29b-41d4-a716-446655440001",
+                      "status": "PAID",
+                      "paidAt": "2024-11-07T15:00:00Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Signature tidak valid atau payload tidak valid",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "code": 400,
+                  "message": "Invalid signature"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Payment tidak ditemukan",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "code": 404,
+                  "message": "Payment tidak ditemukan"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/payment/my-payment": {
+      "get": {
+        "tags": ["Payment"],
+        "summary": "Get pembayaran saya",
+        "description": "Mengambil daftar semua pembayaran milik user yang sedang login",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Daftar pembayaran berhasil diambil",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "integer",
+                      "example": 200
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Daftar pembayaran ditemukan"
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/PaymentDetail"
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "code": 200,
+                  "message": "Daftar pembayaran ditemukan",
+                  "data": [
+                    {
+                      "id": "660e8400-e29b-41d4-a716-446655440001",
+                      "orderId": "550e8400-e29b-41d4-a716-446655440000",
+                      "amount": 16000000,
+                      "status": "PAID",
+                      "paymentMethod": "bank_transfer",
+                      "paidAt": "2024-11-07T15:00:00Z",
+                      "createdAt": "2024-11-07T14:30:00Z"
+                    },
+                    {
+                      "id": "770e8400-e29b-41d4-a716-446655440002",
+                      "orderId": "880e8400-e29b-41d4-a716-446655440003",
+                      "amount": 10000000,
+                      "status": "PENDING",
+                      "paymentMethod": "e-wallet",
+                      "expiredAt": "2024-11-08T10:00:00Z",
+                      "createdAt": "2024-11-07T10:00:00Z"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          }
+        }
+      }
+    },
+    "/payment/payment/{id}": {
+      "get": {
+        "tags": ["Payment"],
+        "summary": "Get detail pembayaran",
+        "description": "Mengambil detail pembayaran berdasarkan ID. User hanya bisa melihat pembayaran miliknya sendiri",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "ID pembayaran",
+            "example": "660e8400-e29b-41d4-a716-446655440001"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Data pembayaran berhasil diambil",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "integer",
+                      "example": 200
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Data pembayaran berhasil diambil."
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/PaymentDetail"
+                    }
+                  }
+                },
+                "example": {
+                  "code": 200,
+                  "message": "Data pembayaran berhasil diambil.",
+                  "data": {
+                    "id": "660e8400-e29b-41d4-a716-446655440001",
+                    "orderId": "550e8400-e29b-41d4-a716-446655440000",
+                    "userId": "770e8400-e29b-41d4-a716-446655440002",
+                    "amount": 16000000,
+                    "status": "PAID",
+                    "paymentMethod": "bank_transfer",
+                    "paymentUrl": "https://app.midtrans.com/snap/v2/vtweb/abc123",
+                    "transactionId": "ORDER-1234567890-MIDTRANS",
+                    "paidAt": "2024-11-07T15:00:00Z",
+                    "order": {
+                      "id": "550e8400-e29b-41d4-a716-446655440000",
+                      "status": "ACCEPTED",
+                      "totalPrice": 16000000,
+                      "provider": {
+                        "id": "880e8400-e29b-41d4-a716-446655440003",
+                        "name": "Jane Photography"
+                      }
+                    },
+                    "createdAt": "2024-11-07T14:30:00Z",
+                    "updatedAt": "2024-11-07T15:00:00Z"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "description": "Tidak memiliki akses ke pembayaran ini",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "code": 403,
+                  "message": "Anda tidak memiliki akses ke pembayaran ini"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
           }
         }
       }
