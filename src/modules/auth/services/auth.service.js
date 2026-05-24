@@ -22,10 +22,8 @@ class AuthService {
     }
 
     const isPasswordValid = await bcrypt.compare(password, user.password);
-    {
-      if (!isPasswordValid) {
-        throw new AppError("Email atau password salah", 401);
-      }
+    if (!isPasswordValid) {
+      throw new AppError("Email atau password salah", 401);
     }
     const token = jwt.sign(
       {

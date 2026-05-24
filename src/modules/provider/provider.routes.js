@@ -5,12 +5,14 @@ const ProviderCoverageController = require("../provider/controllers/providerCove
 const ProviderPortofolioController = require("../provider/controllers/providerPortofolio.controller");
 const ProviderBundleController = require("../provider/controllers/providerBundle.controller");
 const ProviderToppingController = require("./controllers/providerTopping.controller");
+const ProviderAvailabilityController = require("./controllers/providerAvailability.controller");
 const authMiddleware = require("../../middlewares/authMiddleware");
 const validate = require("../../middlewares/validate");
 const providerValidation = require("./validations/provider.validation");
 const PortofolioValidation = require("./validations/providerPortofolio.validation");
 const ProviderBundleValidation = require("./validations/providerBundle.validation");
 const ProviderToppingValidation = require("./validations/providerTopping.validation");
+const ProviderAvailabilityValidation = require("./validations/providerAvailability.validation");
 const upload = require("../../middlewares/multer");
 const router = express.Router();
 
@@ -214,7 +216,7 @@ router.get(
 router.put(
   "/topping/:id",
   authMiddleware.authenticate,
-  validate(ProviderBundleValidation.updateBundle),
+  validate(ProviderToppingValidation.updateTopping),
   ProviderToppingController.updateTopping
 );
 
@@ -222,6 +224,39 @@ router.delete(
   "/topping/:id",
   authMiddleware.authenticate,
   ProviderToppingController.deleteTopping
+);
+
+//Provider Availability
+router.post(
+  "/availability",
+  authMiddleware.authenticate,
+  validate(ProviderAvailabilityValidation.createAvailability),
+  ProviderAvailabilityController.addAvailability
+);
+
+router.get(
+  "/availability",
+  authMiddleware.authenticate,
+  ProviderAvailabilityController.getMyAvailabilities
+);
+
+router.get(
+  "/availability/:id",
+  authMiddleware.authenticate,
+  ProviderAvailabilityController.getAvailabilityById
+);
+
+router.put(
+  "/availability/:id",
+  authMiddleware.authenticate,
+  validate(ProviderAvailabilityValidation.updateAvailability),
+  ProviderAvailabilityController.updateAvailability
+);
+
+router.delete(
+  "/availability/:id",
+  authMiddleware.authenticate,
+  ProviderAvailabilityController.deleteAvailability
 );
 
 module.exports = router;

@@ -26,8 +26,12 @@ class ProviderCoverageService {
       throw new AppError("District tidak tersedia atau tidak valid", 404);
     }
 
-    const exist = await prisma.providerCoverage.findUnique({
-      where: { providerId_districtId: { providerId: provider.id, districtId } },
+    const exist = await prisma.providerCoverage.findFirst({
+      where: {
+        providerId: provider.id,
+        districtId,
+        deletedAt: null,
+      },
     });
 
     if (exist) {
@@ -102,7 +106,7 @@ class ProviderCoverageService {
 
   static async findProvidersByDistrict(districtId) {
     const coverages = await prisma.providerCoverage.findMany({
-      where: { districtId },
+      where: { districtId, deletedAt: null },
       include: {
         provider: {
           select: {
@@ -162,16 +166,21 @@ class ProviderCoverageService {
     if (!provider) {
       throw new AppError("Provider tidak ditemukan", 404);
     }
-    const exist = await prisma.providerCoverage.findUnique({
-      where: { providerId_districtId: { providerId: provider.id, districtId } },
+    const exist = await prisma.providerCoverage.findFirst({
+      where: {
+        providerId: provider.id,
+        districtId,
+        deletedAt: null,
+      },
     });
 
     if (!exist) {
       throw new AppError("Coverage tidak ditemukan.", 404);
     }
 
-    return prisma.providerCoverage.delete({
-      where: { providerId_districtId: { providerId: provider.id, districtId } },
+    return prisma.providerCoverage.update({
+      where: { id: exist.id },
+      data: { deletedAt: new Date() },
     });
   }
 }

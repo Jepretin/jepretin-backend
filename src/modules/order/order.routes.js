@@ -6,7 +6,6 @@ const OrderController = require("./controllers/order.controller");
 
 const router = express.Router();
 
-//Auth
 router.post(
   "/order",
   authMiddleware.authenticate,
@@ -22,15 +21,21 @@ router.get(
 );
 
 router.get(
-  "/order/:orderId",
+  "/my-orders",
   authMiddleware.authenticate,
-  OrderController.getOrderById
+  OrderController.getMyOrders
 );
 
 router.get(
-  "/my-order",
+  "/provider-orders",
   authMiddleware.authenticate,
-  OrderController.getOrdersByUser
+  OrderController.getProviderOrders
+);
+
+router.get(
+  "/order/:orderId",
+  authMiddleware.authenticate,
+  OrderController.getOrderById
 );
 
 router.put(
@@ -38,4 +43,5 @@ router.put(
   authMiddleware.authenticate,
   OrderController.updateOrderStatus
 );
+
 module.exports = router;

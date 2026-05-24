@@ -1,23 +1,19 @@
-// src/modules/wallet/controllers/wallet.controller.js
 const WalletService = require("../services/wallet.service");
+const prisma = require("../../../services/prisma.service");
+const AppError = require("../../../utils/appError");
 const { success } = require("../../../utils/response");
 const handleAsync = require("../../../utils/handleAsync");
 
 class WalletController {
   static getMyWallet = handleAsync(async (req, res) => {
-    const providerId = req.user.providerId;
+    const provider = await prisma.provider.findUnique({
+      where: { userId: req.user.id },
+    });
+    if (!provider) throw new AppError("Provider tidak ditemukan", 404);
 
-    const result = await WalletService.getWalletByProvider(providerId);
+    const result = await WalletService.getWalletByProvider(provider.id);
 
     return success(res, 200, "Data wallet berhasil diambil", result);
-  });
-
-  static initializeWallet = handleAsync(async (req, res) => {
-    const providerId = req.user.providerId;
-
-    const result = await WalletService.initializeWallet(providerId);
-
-    return success(res, 201, "Wallet berhasil dibuat", result);
   });
 
   static updateBalance = handleAsync(async (req, res) => {
@@ -35,19 +31,6 @@ class WalletController {
       res,
       200,
       `Saldo wallet berhasil di${type === "CREDIT" ? "tambahkan" : "kurangi"}`,
-      result
-    );
-  });
-
-  static creditFromPayment = handleAsync(async (req, res) => {
-    const { paymentId } = req.body;
-
-    const result = await WalletService.creditFromPayment(paymentId);
-
-    return success(
-      res,
-      200,
-      "Saldo provider berhasil dikreditkan dari pembayaran",
       result
     );
   });

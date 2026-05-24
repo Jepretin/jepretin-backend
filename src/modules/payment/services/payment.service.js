@@ -1,7 +1,6 @@
 const prisma = require("../../../services/prisma.service");
 const AppError = require("../../../utils/appError");
 const midtransClient = require("midtrans-client");
-const { v4: uuidv4 } = require("uuid");
 const crypto = require("crypto");
 
 class PaymentService {
@@ -26,7 +25,7 @@ class PaymentService {
         throw new AppError("Jumlah pembayaran tidak valid", 400);
 
       // 3) Generate transactionId
-      const transactionId = `PAY-${uuidv4()}`;
+      const transactionId = `PAY-${crypto.randomUUID()}`;
 
       // 4) Buat record pembayaran
       const payment = await tx.payment.create({

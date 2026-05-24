@@ -64,4 +64,6 @@ function formatOrderDetail(order) {
   };
 }
 
-module.exports = { formatOrderSummary, formatOrderDetail };
+const formatOrderResponse = formatOrderDetail;
+
+module.exports = { formatOrderSummary, formatOrderDetail, formatOrderResponse };

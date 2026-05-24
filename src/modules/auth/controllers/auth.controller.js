@@ -1,16 +1,16 @@
 const AuthService = require("../services/auth.service");
-const { success } = require("../../../utils/response");
-const handleAsyc = require("../../../utils/handleAsync");
+const { success, error } = require("../../../utils/response");
+const handleAsync = require("../../../utils/handleAsync");
 
 class AuthController {
-  static login = handleAsyc(async (req, res) => {
+  static login = handleAsync(async (req, res) => {
     const { email, password } = req.body;
 
     const result = await AuthService.login({ email, password });
     return success(res, 200, "Login berhasil.", result);
   });
 
-  static logout = handleAsyc(async (req, res) => {
+  static logout = handleAsync(async (req, res) => {
     const token = req.headers.authorization?.split(" ")[1];
     if (!token) {
       return error(res, 400, "Token diperlukan untuk logout.");

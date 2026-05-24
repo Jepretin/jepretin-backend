@@ -11,24 +11,12 @@ router.get(
   WalletController.getMyWallet
 );
 
-// router.post(
-//   "/init",
-//   authMiddleware.authenticate,
-//   validate(WalletValidation.initializeWallet),
-//   WalletController.initializeWallet
-// );
-
 router.post(
   "/update-balance",
   authMiddleware.authenticate,
+  authMiddleware.authorize("ADMIN"),
   validate(WalletValidation.updateBalance),
   WalletController.updateBalance
-);
-
-router.post(
-  "/credit",
-  validate(WalletValidation.creditFromPayment),
-  WalletController.creditFromPayment
 );
 
 module.exports = router;

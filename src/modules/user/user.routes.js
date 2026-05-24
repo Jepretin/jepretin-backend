@@ -5,7 +5,6 @@ const UserValidation = require("./validations/user.validation");
 const UserAddressValidation = require("./validations/userAddress.validation");
 const authMiddleware = require("../../middlewares/authMiddleware");
 const validate = require("../../middlewares/validate");
-const { valid } = require("joi");
 const router = express.Router();
 
 // Semua endpoint user harus login dulu

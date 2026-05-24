@@ -1,6 +1,5 @@
 const prisma = require("../../../services/prisma.service");
 const AppError = require("../../../utils/appError");
-const WalletService = require("../../wallet/services/wallet.service");
 
 class ProviderService {
   static async registerProvider({ userId, experience, roleIds }) {

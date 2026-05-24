@@ -153,6 +153,7 @@ class ProviderPortofolioService {
   static async getPortofolioByCustomerLocation(userId) {
     const address = await prisma.customerAddress.findFirst({
       where: { userId, isPrimary: true, deletedAt: null },
+      include: { village: { include: { district: true } } },
     });
 
     if (!address)
@@ -160,7 +161,9 @@ class ProviderPortofolioService {
 
     const providers = await prisma.provider.findMany({
       where: {
-        coverages: { some: { districtId: address.districtId } },
+        coverages: {
+          some: { districtId: address.village.district.id },
+        },
         deletedAt: null,
       },
       include: {
@@ -177,14 +180,6 @@ class ProviderPortofolioService {
         "Tidak ditemukan portofolio provider di lokasi Anda.",
         404
       );
-
-    const portofolios = await prisma.providerPortfolio.findMany({
-      where: { providerId: provider.id, deletedAt: null },
-      orderBy: { createdAt: "desc" },
-    });
-
-    if (!portofolios.length)
-      throw new AppError("Portofolio tidak ditemukan.", 404);
 
     return {
       totalProviders: providers.length,

@@ -7,6 +7,8 @@ const providerRoutes = require("../modules/provider/provider.routes");
 const orderRoutes = require("../modules/order/order.routes");
 const paymentRoutes = require("../modules/payment/payment.routes");
 const walletRoutes = require("../modules/wallet/wallet.routes");
+const withdrawalRoutes = require("../modules/withdrawal/withdrawal.routes");
+const reviewRoutes = require("../modules/review/review.routes");
 const router = express.Router();
 
 // gabungkan semua routes per module
@@ -17,5 +19,7 @@ router.use("/provider", providerRoutes);
 router.use("/order", orderRoutes);
 router.use("/payment", paymentRoutes);
 router.use("/wallet", walletRoutes);
+router.use("/withdrawal", withdrawalRoutes);
+router.use("/review", reviewRoutes);
 
 module.exports = router;

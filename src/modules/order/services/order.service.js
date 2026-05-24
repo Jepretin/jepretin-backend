@@ -1,48 +1,6 @@
 const prisma = require("../../../services/prisma.service");
 const AppError = require("../../../utils/appError");
-const {
-  formatOrderSummary,
-  formatOrderDetail,
-} = require("../helpers/order.helper");
-
-const ORDER_STATUS = [
-  "PENDING",
-  "PAID",
-  "IN_PROGRESS",
-  "COMPLETED",
-  "CANCELLED",
-  "EXPIRED",
-  "REFUNDED",
-];
-
-// include presets
-const orderSummaryInclude = {
-  provider: { select: { id: true, user: { select: { name: true } } } },
-};
-
-const orderDetailInclude = {
-  user: { select: { id: true, name: true } },
-  provider: { select: { id: true, user: { select: { name: true } } } },
-  customerAddress: {
-    include: {
-      village: {
-        include: {
-          district: {
-            include: {
-              regency: { include: { province: true } },
-            },
-          },
-        },
-      },
-    },
-  },
-  orderItems: {
-    include: {
-      bundle: true,
-      orderItemToppings: { include: { topping: true } },
-    },
-  },
-};
+const { formatOrderResponse } = require("../helpers/order.helper");
 
 class OrderService {
   static async addOrder({
@@ -70,7 +28,9 @@ class OrderService {
 
       const address = await tx.customerAddress.findFirst({
         where: { id: addressId, userId, deletedAt: null },
-        include: { village: { include: { district: true } } },
+        include: {
+          village: { include: { district: true } },
+        },
       });
       if (!address) throw new AppError("Alamat tidak ditemukan", 404);
 
@@ -81,13 +41,16 @@ class OrderService {
           deletedAt: null,
         },
       });
-      if (!coverage)
+
+      if (!coverage) {
         throw new AppError(
-          "Alamat Anda berada di luar jangkauan provider",
+          "Alamat Anda berada di luar jangkauan provider yang dipilih",
           400
         );
+      }
 
       let totalPrice = 0;
+
       const order = await tx.order.create({
         data: {
           userId,
@@ -108,7 +71,9 @@ class OrderService {
             where: { id: item.bundleId },
           });
           if (!bundle) throw new AppError("Bundle tidak ditemukan", 404);
+
           itemPrice += Number(bundle.price);
+
           orderItem = await tx.orderItem.create({
             data: {
               orderId: order.id,
@@ -116,9 +81,33 @@ class OrderService {
               price: bundle.price,
             },
           });
+        } else if (item.toppingId) {
+          const topping = await tx.providerTopping.findUnique({
+            where: { id: item.toppingId },
+          });
+          if (!topping) throw new AppError("Topping tidak ditemukan", 404);
+
+          const toppingTotal = Number(topping.price) * (item.quantity || 1);
+          itemPrice += toppingTotal;
+
+          orderItem = await tx.orderItem.create({
+            data: {
+              orderId: order.id,
+              price: toppingTotal,
+            },
+          });
+
+          await tx.orderItemTopping.create({
+            data: {
+              orderItemId: orderItem.id,
+              toppingId: topping.id,
+              price: topping.price,
+              quantity: item.quantity || 1,
+            },
+          });
         }
 
-        if (item.toppings?.length) {
+        if (item.toppings && item.toppings.length > 0) {
           for (const toppingItem of item.toppings) {
             const topping = await tx.providerTopping.findUnique({
               where: { id: toppingItem.toppingId },
@@ -147,105 +136,367 @@ class OrderService {
       const updatedOrder = await tx.order.update({
         where: { id: order.id },
         data: { totalPrice },
-        include: orderDetailInclude,
+        include: {
+          user: { select: { id: true, name: true } },
+          provider: {
+            select: {
+              id: true,
+              user: { select: { name: true } },
+            },
+          },
+          customerAddress: {
+            include: {
+              village: {
+                include: {
+                  district: {
+                    include: {
+                      regency: { include: { province: true } },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          orderItems: {
+            include: {
+              bundle: true,
+              orderItemToppings: { include: { topping: true } },
+            },
+          },
+        },
       });
 
-      return {
-        message: "Pesanan berhasil dibuat",
-        data: formatOrderDetail(updatedOrder),
-      };
+      return { data: formatOrderResponse(updatedOrder) };
     });
   }
 
   static async getAllOrder() {
     const orders = await prisma.order.findMany({
       where: { deletedAt: null },
+      orderBy: { createdAt: "desc" },
       include: {
         user: { select: { id: true, name: true } },
-        provider: { select: { id: true, user: { select: { name: true } } } },
+        provider: {
+          select: {
+            id: true,
+            user: { select: { name: true } },
+          },
+        },
+        customerAddress: {
+          include: {
+            village: {
+              include: {
+                district: {
+                  include: {
+                    regency: { include: { province: true } },
+                  },
+                },
+              },
+            },
+          },
+        },
+        orderItems: {
+          include: {
+            bundle: true,
+            orderItemToppings: { include: { topping: true } },
+          },
+        },
       },
-      orderBy: { createdAt: "desc" },
     });
 
-    if (!orders.length) throw new AppError("Belum ada pesanan", 404);
+    if (orders.length === 0) {
+      throw new AppError("Belum ada pesanan", 404);
+    }
 
-    return {
-      message: "Daftar semua pesanan berhasil diambil",
-      data: orders.map(formatOrderSummary),
-    };
-  }
+    const formattedOrders = orders.map((o) => formatOrderResponse(o));
 
-  static async getMyOrders(userId) {
-    const user = await prisma.user.findFirst({
-      where: { id: userId, isActive: true, deletedAt: null, isVerified: true },
-    });
-    if (!user) throw new AppError("Akun belum terverifikasi", 403);
-
-    const orders = await prisma.order.findMany({
-      where: { userId, deletedAt: null },
-      include: orderSummaryInclude,
-      orderBy: { createdAt: "desc" },
-    });
-
-    if (!orders.length) throw new AppError("Belum ada pesanan", 404);
-
-    return {
-      message: "Daftar pesanan berhasil diambil",
-      data: orders.map(formatOrderSummary),
-    };
+    return { data: formattedOrders };
   }
 
   static async getOrderById(userId, orderId) {
+    const user = await prisma.user.findFirst({
+      where: { id: userId, deletedAt: null },
+    });
+    if (!user) throw new AppError("User tidak ditemukan", 404);
+
     const order = await prisma.order.findFirst({
-      where: { id: orderId, userId, deletedAt: null },
-      include: orderDetailInclude,
-    });
-    if (!order) throw new AppError("Pesanan tidak ditemukan", 404);
-
-    return {
-      message: "Data Order berhasil diambil",
-      data: formatOrderDetail(order),
-    };
-  }
-
-  static async updateOrderStatus(orderId, status, userRole) {
-    if (!["ADMIN", "PROVIDER"].includes(userRole))
-      throw new AppError(
-        "Hanya admin atau provider yang dapat mengubah status",
-        403
-      );
-
-    if (!ORDER_STATUS.includes(status))
-      throw new AppError("Status tidak valid", 400);
-
-    const order = await prisma.order.findUnique({
       where: { id: orderId, deletedAt: null },
-      include: orderDetailInclude,
-    });
-    if (!order) throw new AppError("Pesanan tidak ditemukan", 404);
-
-    if (order.status === "COMPLETED" && status !== "REFUNDED")
-      throw new AppError("Pesanan yang selesai tidak dapat diubah lagi", 400);
-
-    const updatedOrder = await prisma.order.update({
-      where: { id: orderId },
-      data: { status },
-      include: orderDetailInclude,
-    });
-
-    await prisma.notification.create({
-      data: {
-        userId: order.userId,
-        type: "SYSTEM",
-        message: `Status pesanan Anda diperbarui menjadi ${status}`,
-        isRead: false,
+      include: {
+        user: { select: { id: true, name: true } },
+        provider: {
+          select: {
+            id: true,
+            user: { select: { name: true } },
+          },
+        },
+        customerAddress: {
+          include: {
+            village: {
+              include: {
+                district: {
+                  include: {
+                    regency: { include: { province: true } },
+                  },
+                },
+              },
+            },
+          },
+        },
+        orderItems: {
+          include: {
+            bundle: true,
+            orderItemToppings: { include: { topping: true } },
+          },
+        },
       },
     });
 
-    return {
-      message: `Status pesanan berhasil diperbarui menjadi ${status}`,
-      data: formatOrderDetail(updatedOrder),
+    if (!order) throw new AppError("Order tidak ditemukan", 404);
+
+    const provider = await prisma.provider.findUnique({
+      where: { userId },
+    });
+
+    const isOwner = order.userId === userId;
+    const isProvider = provider && order.providerId === provider.id;
+
+    if (!isOwner && !isProvider && user.role !== "ADMIN") {
+      throw new AppError("Anda tidak memiliki akses ke order ini", 403);
+    }
+
+    return { data: formatOrderResponse(order) };
+  }
+
+  static async getMyOrders(userId) {
+    const orders = await prisma.order.findMany({
+      where: { userId, deletedAt: null },
+      orderBy: { createdAt: "desc" },
+      include: {
+        user: { select: { id: true, name: true } },
+        provider: {
+          select: {
+            id: true,
+            user: { select: { name: true } },
+          },
+        },
+        customerAddress: {
+          include: {
+            village: {
+              include: {
+                district: {
+                  include: {
+                    regency: { include: { province: true } },
+                  },
+                },
+              },
+            },
+          },
+        },
+        orderItems: {
+          include: {
+            bundle: true,
+            orderItemToppings: { include: { topping: true } },
+          },
+        },
+      },
+    });
+
+    if (orders.length === 0) {
+      throw new AppError("Belum ada pesanan yang dibuat", 404);
+    }
+
+    const formattedOrders = orders.map((o) => formatOrderResponse(o));
+
+    return { data: formattedOrders };
+  }
+
+  static async getProviderOrders(userId) {
+    const provider = await prisma.provider.findUnique({
+      where: { userId },
+    });
+    if (!provider) throw new AppError("Provider tidak ditemukan", 404);
+
+    const orders = await prisma.order.findMany({
+      where: { providerId: provider.id, deletedAt: null },
+      orderBy: { createdAt: "desc" },
+      include: {
+        user: { select: { id: true, name: true } },
+        provider: {
+          select: {
+            id: true,
+            user: { select: { name: true } },
+          },
+        },
+        customerAddress: {
+          include: {
+            village: {
+              include: {
+                district: {
+                  include: {
+                    regency: { include: { province: true } },
+                  },
+                },
+              },
+            },
+          },
+        },
+        orderItems: {
+          include: {
+            bundle: true,
+            orderItemToppings: { include: { topping: true } },
+          },
+        },
+      },
+    });
+
+    if (orders.length === 0) {
+      throw new AppError("Belum ada pesanan masuk", 404);
+    }
+
+    const formattedOrders = orders.map((o) => formatOrderResponse(o));
+
+    return { data: formattedOrders };
+  }
+
+  static async updateOrderStatus(orderId, status, userId, userRole) {
+    const TRANSITIONS = {
+      CUSTOMER: {
+        PENDING: ["CANCELLED"],
+        WAITING_CONFIRMATION: ["COMPLETED"],
+      },
+      PROVIDER: {
+        PAID: ["IN_PROGRESS"],
+        IN_PROGRESS: ["WAITING_CONFIRMATION"],
+      },
     };
+
+    return await prisma.$transaction(async (tx) => {
+      const order = await tx.order.findUnique({
+        where: { id: orderId, deletedAt: null },
+        include: {
+          provider: { select: { id: true, userId: true } },
+        },
+      });
+
+      if (!order) throw new AppError("Order tidak ditemukan", 404);
+
+      if (userRole !== "ADMIN") {
+        const provider = await tx.provider.findUnique({
+          where: { userId },
+        });
+
+        const isOwner = order.userId === userId;
+        const isProvider =
+          provider && order.providerId === provider.id;
+
+        if (!isOwner && !isProvider) {
+          throw new AppError("Anda tidak memiliki akses ke order ini", 403);
+        }
+
+        const effectiveRole = isProvider ? "PROVIDER" : "CUSTOMER";
+        const currentStatus = order.status;
+        const allowedStatuses =
+          TRANSITIONS[effectiveRole]?.[currentStatus];
+
+        if (!allowedStatuses || !allowedStatuses.includes(status)) {
+          throw new AppError(
+            `Status tidak dapat diubah dari ${currentStatus} ke ${status}`,
+            400
+          );
+        }
+
+        if (effectiveRole === "CUSTOMER" && !isOwner) {
+          throw new AppError(
+            "Anda tidak memiliki akses ke order ini",
+            403
+          );
+        }
+      }
+
+      const updatedOrder = await tx.order.update({
+        where: { id: orderId },
+        data: { status },
+        include: {
+          user: { select: { id: true, name: true } },
+          provider: {
+            select: {
+              id: true,
+              user: { select: { name: true } },
+            },
+          },
+          orderItems: {
+            include: {
+              bundle: true,
+              orderItemToppings: { include: { topping: true } },
+            },
+          },
+        },
+      });
+
+      const statusMessages = {
+        IN_PROGRESS: "Pesanan sedang dikerjakan oleh provider",
+        WAITING_CONFIRMATION:
+          "Provider telah menyelesaikan pekerjaan, menunggu konfirmasi Anda",
+        COMPLETED: "Pesanan telah selesai",
+        CANCELLED: "Pesanan dibatalkan",
+      };
+
+      const message =
+        statusMessages[status] ||
+        `Status pesanan diperbarui menjadi ${status}`;
+
+      await tx.notification.create({
+        data: {
+          userId: order.userId,
+          orderId: order.id,
+          type: "ORDER_STATUS",
+          message,
+          isRead: false,
+        },
+      });
+
+      if (status === "COMPLETED") {
+        const wallet = await tx.wallet.findFirst({
+          where: { providerId: order.providerId, deletedAt: null },
+        });
+
+        if (wallet) {
+          const payment = await tx.payment.findFirst({
+            where: { orderId: order.id, status: "SUCCESS", deletedAt: null },
+          });
+
+          if (payment) {
+            const creditAmount = Number(
+              payment.netAmount || payment.amount
+            );
+            const newBalance =
+              Number(wallet.currentBalance) + creditAmount;
+
+            await tx.wallet.update({
+              where: { id: wallet.id },
+              data: { currentBalance: newBalance },
+            });
+
+            await tx.walletTransaction.create({
+              data: {
+                walletId: wallet.id,
+                orderId: order.id,
+                paymentId: payment.id,
+                amount: creditAmount,
+                type: "CREDIT",
+                status: "SUCCESS",
+                description: `Pembayaran order ${order.id} dikreditkan`,
+              },
+            });
+          }
+        }
+      }
+
+      return {
+        message,
+        data: formatOrderResponse(updatedOrder),
+      };
+    });
   }
 }
 

@@ -1,6 +1,6 @@
 const Joi = require("joi");
 
-class providerCoverageValidation {
+class ProviderCoverageValidation {
   static addCoverage() {
     return Joi.object({
       districtId: Joi.string().uuid().required().messages({
@@ -10,4 +10,4 @@ class providerCoverageValidation {
     });
   }
 }
-module.exports = providerCoverageValidation;
+module.exports = ProviderCoverageValidation;
