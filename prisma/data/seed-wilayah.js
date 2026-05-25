@@ -1,14 +1,19 @@
 const path = require("path");
 const csv = require("csvtojson");
-const prisma = require("../src/services/prisma.service");
+const prisma = require("../../src/services/prisma.service");
 
-const DATA_DIR = path.join(__dirname, "data");
+const DATA_DIR = __dirname;
 
 async function main() {
   console.log("🌏 Seeding wilayah Indonesia...");
 
+  // =========================
   // PROVINCES
-  const provinces = await csv().fromFile(path.join(DATA_DIR, "provinces.csv"));
+  // =========================
+  const provinces = await csv({
+    noheader: true,
+    headers: ["id", "name"],
+  }).fromFile(path.join(DATA_DIR, "provinces.csv"));
 
   await prisma.province.createMany({
     data: provinces.map((p) => ({
@@ -20,8 +25,13 @@ async function main() {
 
   console.log(`✅ Provinces: ${provinces.length}`);
 
+  // =========================
   // REGENCIES
-  const regencies = await csv().fromFile(path.join(DATA_DIR, "regencies.csv"));
+  // =========================
+  const regencies = await csv({
+    noheader: true,
+    headers: ["id", "province_id", "name"],
+  }).fromFile(path.join(DATA_DIR, "regencies.csv"));
 
   await prisma.regency.createMany({
     data: regencies.map((r) => ({
@@ -34,8 +44,13 @@ async function main() {
 
   console.log(`✅ Regencies: ${regencies.length}`);
 
+  // =========================
   // DISTRICTS
-  const districts = await csv().fromFile(path.join(DATA_DIR, "districts.csv"));
+  // =========================
+  const districts = await csv({
+    noheader: true,
+    headers: ["id", "regency_id", "name"],
+  }).fromFile(path.join(DATA_DIR, "districts.csv"));
 
   await prisma.district.createMany({
     data: districts.map((d) => ({
@@ -48,8 +63,13 @@ async function main() {
 
   console.log(`✅ Districts: ${districts.length}`);
 
+  // =========================
   // VILLAGES
-  const villages = await csv().fromFile(path.join(DATA_DIR, "villages.csv"));
+  // =========================
+  const villages = await csv({
+    noheader: true,
+    headers: ["id", "district_id", "name"],
+  }).fromFile(path.join(DATA_DIR, "villages.csv"));
 
   await prisma.village.createMany({
     data: villages.map((v) => ({
@@ -67,7 +87,7 @@ async function main() {
 
 main()
   .catch((err) => {
-    console.error(err);
+    console.error("❌ Error seeding wilayah:", err);
   })
   .finally(async () => {
     await prisma.$disconnect();
