@@ -107,7 +107,7 @@ class WithdrawalService {
     });
 
     if (!requests.length) {
-      throw new AppError("Belum ada riwayat penarikan", 404);
+      return { total: 0, data: [] };
     }
 
     return {
@@ -141,7 +141,7 @@ class WithdrawalService {
     });
 
     if (!requests.length) {
-      throw new AppError("Belum ada permintaan penarikan", 404);
+      return { total: 0, data: [] };
     }
 
     return {

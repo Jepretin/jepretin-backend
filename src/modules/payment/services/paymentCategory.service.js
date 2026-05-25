@@ -30,6 +30,28 @@ class PaymentCategoryService {
     });
   }
 
+  static async updatePaymentCategory(id, { name, description }) {
+    const category = await prisma.paymentCategory.findFirst({
+      where: { id, deletedAt: null },
+    });
+    if (!category) throw new AppError("Kategori pembayaran tidak ditemukan", 404);
+
+    if (name) {
+      const duplicate = await prisma.paymentCategory.findFirst({
+        where: { name, deletedAt: null, id: { not: id } },
+      });
+      if (duplicate) throw new AppError("Nama kategori sudah ada", 400);
+    }
+
+    return prisma.paymentCategory.update({
+      where: { id },
+      data: {
+        name: name ?? category.name,
+        description: description !== undefined ? description : category.description,
+      },
+    });
+  }
+
   // Soft delete kategori pembayaran
   static async removePaymentCategory(id) {
     const category = await prisma.paymentCategory.findUnique({

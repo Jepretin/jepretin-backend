@@ -61,10 +61,6 @@ class ProviderAvailabilityService {
       orderBy: { startDate: "asc" },
     });
 
-    if (!availabilities.length) {
-      throw new AppError("Belum ada data ketersediaan", 404);
-    }
-
     return {
       total: availabilities.length,
       data: availabilities.map((a) => ({

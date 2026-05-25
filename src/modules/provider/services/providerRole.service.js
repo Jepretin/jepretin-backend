@@ -15,6 +15,20 @@ class ProviderRoleService {
       throw new AppError("Provider tidak ditemukan", 404);
     }
 
+    const existing = await prisma.providerRole.findFirst({
+      where: { providerId, roleId },
+    });
+
+    if (existing) {
+      if (existing.deletedAt) {
+        return prisma.providerRole.update({
+          where: { id: existing.id },
+          data: { deletedAt: null },
+        });
+      }
+      throw new AppError("Provider sudah memiliki role ini", 400);
+    }
+
     return prisma.providerRole.create({
       data: { providerId, roleId },
     });
@@ -32,19 +46,47 @@ class ProviderRoleService {
       },
     });
   }
+
+  static async createRole(name) {
+    const existing = await prisma.role.findFirst({
+      where: { name, deletedAt: null },
+    });
+    if (existing) throw new AppError("Role dengan nama ini sudah ada", 400);
+
+    return prisma.role.create({
+      data: { name },
+    });
+  }
+
+  static async updateRole(id, name) {
+    const role = await prisma.role.findFirst({
+      where: { id, deletedAt: null },
+    });
+    if (!role) throw new AppError("Role tidak ditemukan", 404);
+
+    const duplicate = await prisma.role.findFirst({
+      where: { name, deletedAt: null, id: { not: id } },
+    });
+    if (duplicate) throw new AppError("Role dengan nama ini sudah ada", 400);
+
+    return prisma.role.update({
+      where: { id },
+      data: { name },
+    });
+  }
+
   static async removeRole(providerId, roleId) {
-    try {
-      return await prisma.providerRole.delete({
-        where: {
-          providerId_roleId: { providerId, roleId },
-        },
-      });
-    } catch (err) {
-      throw new AppError(
-        "ProviderRole tidak ditemukan atau sudah dihapus",
-        404
-      );
+    const providerRole = await prisma.providerRole.findFirst({
+      where: { providerId, roleId, deletedAt: null },
+    });
+    if (!providerRole) {
+      throw new AppError("ProviderRole tidak ditemukan atau sudah dihapus", 404);
     }
+
+    return prisma.providerRole.update({
+      where: { id: providerRole.id },
+      data: { deletedAt: new Date() },
+    });
   }
 }
 

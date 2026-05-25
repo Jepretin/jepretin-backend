@@ -34,6 +34,18 @@ class PaymentMethodController {
     await PaymentMethodService.removePaymentMethod(id);
     return success(res, 200, "Metode pembayaran berhasil dihapus.");
   });
+
+  static updatePaymentMethod = handleAsync(async (req, res) => {
+    const { id } = req.params;
+    const { name, provider, categoryId } = req.body;
+
+    const result = await PaymentMethodService.updatePaymentMethod(id, {
+      name,
+      provider,
+      categoryId,
+    });
+    return success(res, 200, "Metode pembayaran berhasil diperbarui.", result);
+  });
 }
 
 module.exports = PaymentMethodController;

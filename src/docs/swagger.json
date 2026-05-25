@@ -30,7 +30,11 @@
     { "name": "Provider Topping", "description": "Add-on/topping management" },
     { "name": "Provider Availability", "description": "Provider availability management" },
     { "name": "Review", "description": "Customer reviews" },
-    { "name": "Wilayah", "description": "Indonesia location data" }
+    { "name": "Wilayah", "description": "Indonesia location data" },
+    { "name": "Notification", "description": "In-app notifications" },
+    { "name": "Like", "description": "Portfolio like/unlike system" },
+    { "name": "Payment Category", "description": "Payment category management" },
+    { "name": "Payment Method", "description": "Payment method management" }
   ],
   "components": {
     "securitySchemes": {
@@ -740,6 +744,144 @@
           "id": { "type": "string" },
           "name": { "type": "string" },
           "district": { "$ref": "#/components/schemas/District" }
+        }
+      },
+
+      "NotificationItem": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "type": { "type": "string", "enum": ["ORDER_STATUS", "PAYMENT", "SYSTEM", "PROMO", "GREETING"] },
+          "message": { "type": "string" },
+          "isRead": { "type": "boolean" },
+          "orderId": { "type": "string", "format": "uuid", "nullable": true },
+          "orderStatus": { "type": "string", "nullable": true },
+          "templateTitle": { "type": "string", "nullable": true },
+          "createdAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "NotificationList": {
+        "type": "object",
+        "properties": {
+          "total": { "type": "integer" },
+          "unreadCount": { "type": "integer" },
+          "page": { "type": "integer" },
+          "limit": { "type": "integer" },
+          "data": { "type": "array", "items": { "$ref": "#/components/schemas/NotificationItem" } }
+        }
+      },
+      "UnreadCount": {
+        "type": "object",
+        "properties": {
+          "unreadCount": { "type": "integer" }
+        }
+      },
+
+      "LikeToggleRequest": {
+        "type": "object",
+        "properties": {
+          "portfolioId": { "type": "string", "format": "uuid" }
+        },
+        "required": ["portfolioId"]
+      },
+      "LikeToggleResponse": {
+        "type": "object",
+        "properties": {
+          "liked": { "type": "boolean" },
+          "likeCount": { "type": "integer" },
+          "message": { "type": "string" }
+        }
+      },
+      "LikeCountResponse": {
+        "type": "object",
+        "properties": {
+          "portfolioId": { "type": "string", "format": "uuid" },
+          "likeCount": { "type": "integer" }
+        }
+      },
+      "MyLikeItem": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "likedAt": { "type": "string", "format": "date-time" },
+          "portfolio": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string", "format": "uuid" },
+              "mediaUrl": { "type": "string" },
+              "mediaType": { "type": "string" },
+              "description": { "type": "string" },
+              "providerName": { "type": "string" },
+              "providerAvatar": { "type": "string" }
+            }
+          }
+        }
+      },
+      "MyLikeList": {
+        "type": "object",
+        "properties": {
+          "total": { "type": "integer" },
+          "data": { "type": "array", "items": { "$ref": "#/components/schemas/MyLikeItem" } }
+        }
+      },
+
+      "TemplateCreate": {
+        "type": "object",
+        "properties": {
+          "title": { "type": "string" },
+          "type": { "type": "string", "enum": ["ORDER_STATUS", "PAYMENT", "SYSTEM", "PROMO", "GREETING"] },
+          "message": { "type": "string", "maxLength": 255 }
+        },
+        "required": ["title", "type", "message"]
+      },
+      "TemplateUpdate": {
+        "type": "object",
+        "properties": {
+          "title": { "type": "string" },
+          "type": { "type": "string", "enum": ["ORDER_STATUS", "PAYMENT", "SYSTEM", "PROMO", "GREETING"] },
+          "message": { "type": "string", "maxLength": 255 }
+        }
+      },
+      "TemplateDetail": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "title": { "type": "string" },
+          "type": { "type": "string" },
+          "message": { "type": "string" },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time" }
+        }
+      },
+
+      "CreateRoleRequest": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string" }
+        },
+        "required": ["name"]
+      },
+      "UpdateRoleRequest": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string" }
+        },
+        "required": ["name"]
+      },
+
+      "PaymentCategoryUpdate": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string" },
+          "description": { "type": "string" }
+        }
+      },
+      "PaymentMethodUpdate": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string" },
+          "provider": { "type": "string" },
+          "categoryId": { "type": "string", "format": "uuid" }
         }
       }
     }
@@ -3300,6 +3442,459 @@
             }
           },
           "401": { "$ref": "#/components/responses/UnauthorizedError" },
+          "404": { "$ref": "#/components/responses/NotFoundError" }
+        }
+      }
+    },
+
+    "/notification": {
+      "get": {
+        "tags": ["Notification"],
+        "summary": "Get notifications",
+        "description": "Get paginated notifications for the authenticated user. Query params: page (default 1), limit (default 20). Response includes total, unreadCount, and paginated data.",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "page", "in": "query", "schema": { "type": "integer", "default": 1 } },
+          { "name": "limit", "in": "query", "schema": { "type": "integer", "default": 20 } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Notifications retrieved",
+            "content": {
+              "application/json": {
+                "schema": { "type": "object", "properties": { "code": { "type": "integer" }, "message": { "type": "string" }, "data": { "$ref": "#/components/schemas/NotificationList" } } }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/UnauthorizedError" }
+        }
+      }
+    },
+    "/notification/unread-count": {
+      "get": {
+        "tags": ["Notification"],
+        "summary": "Get unread count",
+        "description": "Get badge counter of unread notifications",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Unread count",
+            "content": {
+              "application/json": {
+                "schema": { "type": "object", "properties": { "code": { "type": "integer" }, "message": { "type": "string" }, "data": { "$ref": "#/components/schemas/UnreadCount" } } }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/UnauthorizedError" }
+        }
+      }
+    },
+    "/notification/{id}/read": {
+      "put": {
+        "tags": ["Notification"],
+        "summary": "Mark as read",
+        "description": "Mark a single notification as read",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }
+        ],
+        "responses": {
+          "200": { "description": "Notification marked as read", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/SuccessResponse" } } } },
+          "401": { "$ref": "#/components/responses/UnauthorizedError" },
+          "404": { "$ref": "#/components/responses/NotFoundError" }
+        }
+      }
+    },
+    "/notification/read-all": {
+      "put": {
+        "tags": ["Notification"],
+        "summary": "Mark all as read",
+        "description": "Mark all unread notifications as read. Returns updated count.",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "All marked as read",
+            "content": {
+              "application/json": {
+                "schema": { "type": "object", "properties": { "code": { "type": "integer" }, "message": { "type": "string" }, "data": { "type": "object", "properties": { "updatedCount": { "type": "integer" } } } } }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/UnauthorizedError" }
+        }
+      }
+    },
+
+    "/like/toggle": {
+      "post": {
+        "tags": ["Like"],
+        "summary": "Toggle like/unlike",
+        "description": "Like a portfolio (if already liked, removes the like). Returns current liked state and like count.",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/LikeToggleRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Like toggled",
+            "content": {
+              "application/json": {
+                "schema": { "type": "object", "properties": { "code": { "type": "integer" }, "message": { "type": "string" }, "data": { "$ref": "#/components/schemas/LikeToggleResponse" } } }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/ValidationError" },
+          "401": { "$ref": "#/components/responses/UnauthorizedError" },
+          "404": { "$ref": "#/components/responses/NotFoundError" }
+        }
+      }
+    },
+    "/like/count/{portfolioId}": {
+      "get": {
+        "tags": ["Like"],
+        "summary": "Get like count",
+        "description": "Get the total number of likes for a portfolio",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "portfolioId", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Like count",
+            "content": {
+              "application/json": {
+                "schema": { "type": "object", "properties": { "code": { "type": "integer" }, "message": { "type": "string" }, "data": { "$ref": "#/components/schemas/LikeCountResponse" } } }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/UnauthorizedError" },
+          "404": { "$ref": "#/components/responses/NotFoundError" }
+        }
+      }
+    },
+    "/like/my-likes": {
+      "get": {
+        "tags": ["Like"],
+        "summary": "Get my likes",
+        "description": "Get all portfolios liked by the authenticated user",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Liked portfolios",
+            "content": {
+              "application/json": {
+                "schema": { "type": "object", "properties": { "code": { "type": "integer" }, "message": { "type": "string" }, "data": { "$ref": "#/components/schemas/MyLikeList" } } }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/UnauthorizedError" }
+        }
+      }
+    },
+
+    "/payment/category": {
+      "post": {
+        "tags": ["Payment Category"],
+        "summary": "Add payment category",
+        "description": "Admin: create a new payment category",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": { "type": "string" },
+                  "description": { "type": "string" }
+                },
+                "required": ["name"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Category created", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/SuccessResponse" } } } },
+          "400": { "$ref": "#/components/responses/ValidationError" },
+          "401": { "$ref": "#/components/responses/UnauthorizedError" },
+          "403": { "$ref": "#/components/responses/ForbiddenError" }
+        }
+      },
+      "get": {
+        "tags": ["Payment Category"],
+        "summary": "Get payment categories",
+        "description": "Get all payment categories",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "List of categories",
+            "content": { "application/json": { "schema": { "type": "object", "properties": { "code": { "type": "integer" }, "message": { "type": "string" }, "data": { "type": "array", "items": { "type": "object" } } } } } }
+          },
+          "401": { "$ref": "#/components/responses/UnauthorizedError" }
+        }
+      }
+    },
+    "/payment/category/{id}": {
+      "put": {
+        "tags": ["Payment Category"],
+        "summary": "Update payment category",
+        "description": "Admin: update a payment category name or description",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/PaymentCategoryUpdate" }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Category updated", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/SuccessResponse" } } } },
+          "400": { "$ref": "#/components/responses/ValidationError" },
+          "401": { "$ref": "#/components/responses/UnauthorizedError" },
+          "403": { "$ref": "#/components/responses/ForbiddenError" },
+          "404": { "$ref": "#/components/responses/NotFoundError" }
+        }
+      },
+      "delete": {
+        "tags": ["Payment Category"],
+        "summary": "Remove payment category",
+        "description": "Soft delete a payment category by ID",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }
+        ],
+        "responses": {
+          "200": { "description": "Category removed", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/SuccessResponse" } } } },
+          "401": { "$ref": "#/components/responses/UnauthorizedError" },
+          "404": { "$ref": "#/components/responses/NotFoundError" }
+        }
+      }
+    },
+    "/payment/method": {
+      "post": {
+        "tags": ["Payment Method"],
+        "summary": "Add payment method",
+        "description": "Admin: create a new payment method",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": { "type": "string" },
+                  "provider": { "type": "string" },
+                  "categoryId": { "type": "string", "format": "uuid" }
+                },
+                "required": ["name", "categoryId"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Method created", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/SuccessResponse" } } } },
+          "400": { "$ref": "#/components/responses/ValidationError" },
+          "401": { "$ref": "#/components/responses/UnauthorizedError" },
+          "403": { "$ref": "#/components/responses/ForbiddenError" }
+        }
+      },
+      "get": {
+        "tags": ["Payment Method"],
+        "summary": "Get payment methods",
+        "description": "Get all payment methods",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "List of methods",
+            "content": { "application/json": { "schema": { "type": "object", "properties": { "code": { "type": "integer" }, "message": { "type": "string" }, "data": { "type": "array", "items": { "type": "object" } } } } } }
+          },
+          "401": { "$ref": "#/components/responses/UnauthorizedError" }
+        }
+      }
+    },
+    "/payment/method/{id}": {
+      "put": {
+        "tags": ["Payment Method"],
+        "summary": "Update payment method",
+        "description": "Admin: update a payment method name, provider, or category",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/PaymentMethodUpdate" }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Method updated", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/SuccessResponse" } } } },
+          "400": { "$ref": "#/components/responses/ValidationError" },
+          "401": { "$ref": "#/components/responses/UnauthorizedError" },
+          "403": { "$ref": "#/components/responses/ForbiddenError" },
+          "404": { "$ref": "#/components/responses/NotFoundError" }
+        }
+      },
+      "delete": {
+        "tags": ["Payment Method"],
+        "summary": "Remove payment method",
+        "description": "Soft delete a payment method by ID",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }
+        ],
+        "responses": {
+          "200": { "description": "Method removed", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/SuccessResponse" } } } },
+          "401": { "$ref": "#/components/responses/UnauthorizedError" },
+          "404": { "$ref": "#/components/responses/NotFoundError" }
+        }
+      }
+    },
+
+    "/notification/template": {
+      "post": {
+        "tags": ["Notification"],
+        "summary": "Create notification template",
+        "description": "Admin: create a new notification template for system notifications",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/TemplateCreate" }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Template created", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/SuccessResponse" } } } },
+          "400": { "$ref": "#/components/responses/ValidationError" },
+          "401": { "$ref": "#/components/responses/UnauthorizedError" },
+          "403": { "$ref": "#/components/responses/ForbiddenError" }
+        }
+      },
+      "get": {
+        "tags": ["Notification"],
+        "summary": "Get all notification templates",
+        "description": "Get all active notification templates",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": { "description": "List of templates", "content": { "application/json": { "schema": { "type": "object", "properties": { "code": { "type": "integer" }, "message": { "type": "string" }, "data": { "type": "array", "items": { "$ref": "#/components/schemas/TemplateDetail" } } } } } } },
+          "401": { "$ref": "#/components/responses/UnauthorizedError" }
+        }
+      }
+    },
+    "/notification/template/{id}": {
+      "get": {
+        "tags": ["Notification"],
+        "summary": "Get template by ID",
+        "description": "Get a notification template by ID",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }
+        ],
+        "responses": {
+          "200": { "description": "Template detail", "content": { "application/json": { "schema": { "type": "object", "properties": { "code": { "type": "integer" }, "message": { "type": "string" }, "data": { "$ref": "#/components/schemas/TemplateDetail" } } } } } },
+          "401": { "$ref": "#/components/responses/UnauthorizedError" },
+          "404": { "$ref": "#/components/responses/NotFoundError" }
+        }
+      },
+      "put": {
+        "tags": ["Notification"],
+        "summary": "Update notification template",
+        "description": "Admin: update a notification template",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/TemplateUpdate" }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Template updated", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/SuccessResponse" } } } },
+          "400": { "$ref": "#/components/responses/ValidationError" },
+          "401": { "$ref": "#/components/responses/UnauthorizedError" },
+          "403": { "$ref": "#/components/responses/ForbiddenError" },
+          "404": { "$ref": "#/components/responses/NotFoundError" }
+        }
+      },
+      "delete": {
+        "tags": ["Notification"],
+        "summary": "Delete notification template",
+        "description": "Admin: soft delete a notification template",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }
+        ],
+        "responses": {
+          "200": { "description": "Template deleted", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/SuccessResponse" } } } },
+          "401": { "$ref": "#/components/responses/UnauthorizedError" },
+          "403": { "$ref": "#/components/responses/ForbiddenError" },
+          "404": { "$ref": "#/components/responses/NotFoundError" }
+        }
+      }
+    },
+
+    "/provider/role": {
+      "post": {
+        "tags": ["Provider"],
+        "summary": "Create a new provider role",
+        "description": "Admin: create a new provider role (e.g., Photographer, Videographer, MUA)",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CreateRoleRequest" }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Role created", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/SuccessResponse" } } } },
+          "400": { "$ref": "#/components/responses/ValidationError" },
+          "401": { "$ref": "#/components/responses/UnauthorizedError" },
+          "403": { "$ref": "#/components/responses/ForbiddenError" }
+        }
+      }
+    },
+    "/provider/role/{id}": {
+      "put": {
+        "tags": ["Provider"],
+        "summary": "Update a provider role",
+        "description": "Admin: update a provider role name",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/UpdateRoleRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Role updated", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/SuccessResponse" } } } },
+          "400": { "$ref": "#/components/responses/ValidationError" },
+          "401": { "$ref": "#/components/responses/UnauthorizedError" },
+          "403": { "$ref": "#/components/responses/ForbiddenError" },
           "404": { "$ref": "#/components/responses/NotFoundError" }
         }
       }

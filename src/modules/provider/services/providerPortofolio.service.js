@@ -63,8 +63,6 @@ class ProviderPortofolioService {
       orderBy: { createdAt: "desc" },
     });
 
-    if (!portofolios.length) throw new AppError("Tidak ada portofolio", 404);
-
     return {
       total: portofolios.length,
       data: portofolios.map((p) => ({
@@ -92,9 +90,6 @@ class ProviderPortofolioService {
       where: { providerId: provider.id, deletedAt: null },
       orderBy: { createdAt: "desc" },
     });
-
-    if (!portofolios.length)
-      throw new AppError("Anda belum mempunyai portofolio", 404);
 
     return {
       total: portofolios.length,
@@ -130,9 +125,6 @@ class ProviderPortofolioService {
       where: { providerId: provider.id, deletedAt: null },
       orderBy: { createdAt: "desc" },
     });
-
-    if (!portofolios.length)
-      throw new AppError("Provider tidak memiliki portofolio.", 404);
 
     return {
       providerId: provider.id,

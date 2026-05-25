@@ -9,6 +9,8 @@ const paymentRoutes = require("../modules/payment/payment.routes");
 const walletRoutes = require("../modules/wallet/wallet.routes");
 const withdrawalRoutes = require("../modules/withdrawal/withdrawal.routes");
 const reviewRoutes = require("../modules/review/review.routes");
+const notificationRoutes = require("../modules/notification/notification.routes");
+const likeRoutes = require("../modules/like/like.routes");
 const router = express.Router();
 
 // gabungkan semua routes per module
@@ -21,5 +23,7 @@ router.use("/payment", paymentRoutes);
 router.use("/wallet", walletRoutes);
 router.use("/withdrawal", withdrawalRoutes);
 router.use("/review", reviewRoutes);
+router.use("/notification", notificationRoutes);
+router.use("/like", likeRoutes);
 
 module.exports = router;

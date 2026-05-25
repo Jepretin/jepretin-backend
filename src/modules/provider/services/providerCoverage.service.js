@@ -136,10 +136,6 @@ class ProviderCoverageService {
       },
     });
 
-    if (coverages.length === 0) {
-      throw new AppError("Tidak ada provider yang mencover district ini", 404);
-    }
-
     return coverages.map((c) => ({
       providerName: c.provider.user.name,
       providerRoles: c.provider.roles.map((r) => r.role.name),

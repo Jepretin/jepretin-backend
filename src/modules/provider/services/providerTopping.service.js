@@ -117,9 +117,6 @@ class ProviderToppingService {
       orderBy: { createdAt: "desc" },
     });
 
-    if (!myTopping.length)
-      throw new AppError("Anda tidak memiliki topping.", 404);
-
     return {
       total: myTopping.length,
       data: myTopping.map((t) => ({
@@ -148,9 +145,6 @@ class ProviderToppingService {
     });
 
     if (!provider) throw new AppError("Provider tidak ditemukan.", 404);
-    if (!provider.toppings.length)
-      throw new AppError("Provider tidak memiliki topping.", 404);
-
     return {
       total: provider.toppings.length,
       data: provider.toppings.map((t) => ({

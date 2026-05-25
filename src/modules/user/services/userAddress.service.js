@@ -60,9 +60,6 @@ class UserAddressService {
       },
     });
 
-    if (addresses.length === 0)
-      throw new AppError("Belum ada alamat yang tersimpan", 404);
-
     return {
       data: addresses.map((a) => formatAddressResponse(a, user.name)),
     };

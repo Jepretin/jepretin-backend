@@ -21,6 +21,21 @@ class ProviderRoleController {
     await ProviderRoleService.removeRole(providerId, roleId);
     return success(res, 200, "Provider Role berhasil dihapus");
   });
+
+  static createRole = handleAsync(async (req, res) => {
+    const { name } = req.body;
+
+    const result = await ProviderRoleService.createRole(name);
+    return success(res, 201, "Role berhasil dibuat", result);
+  });
+
+  static updateRole = handleAsync(async (req, res) => {
+    const { id } = req.params;
+    const { name } = req.body;
+
+    const result = await ProviderRoleService.updateRole(id, name);
+    return success(res, 200, "Role berhasil diperbarui", result);
+  });
 }
 
 module.exports = ProviderRoleController;

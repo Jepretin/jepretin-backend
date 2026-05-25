@@ -49,7 +49,10 @@ class PasswordService {
       data: { password: hashedPassword },
     });
 
-    await prisma.passwordReset.delete({ where: { id: resetToken.id } });
+    await prisma.passwordReset.update({
+      where: { id: resetToken.id },
+      data: { deletedAt: new Date() },
+    });
 
     return true;
   }

@@ -107,11 +107,7 @@ class ProviderService {
       },
     });
 
-    if (!providers || providers.length === 0) {
-      throw new AppError("Tidak ada data Provider", 404);
-    }
-
-    return providers.map((p) => ({
+    return (providers || []).map((p) => ({
       id: p.id,
       status: p.status,
       experience: p.experience,

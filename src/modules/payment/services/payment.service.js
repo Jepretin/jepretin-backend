@@ -183,9 +183,6 @@ class PaymentService {
         orderBy: { createdAt: "desc" },
       });
 
-      if (!payments.length)
-        throw new AppError("Belum ada riwayat pembayaran", 404);
-
       const formatted = payments.map((p) => ({
         id: p.id,
         transactionId: p.transactionId,

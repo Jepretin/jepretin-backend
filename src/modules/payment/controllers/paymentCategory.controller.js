@@ -33,6 +33,17 @@ class PaymentCategoryController {
     await PaymentCategoryService.removePaymentCategory(id);
     return success(res, 200, "Kategori pembayaran berhasil dihapus.");
   });
+
+  static updatePaymentCategory = handleAsync(async (req, res) => {
+    const { id } = req.params;
+    const { name, description } = req.body;
+
+    const result = await PaymentCategoryService.updatePaymentCategory(id, {
+      name,
+      description,
+    });
+    return success(res, 200, "Kategori pembayaran berhasil diperbarui.", result);
+  });
 }
 
 module.exports = PaymentCategoryController;

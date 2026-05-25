@@ -90,9 +90,6 @@ class ProviderBundleService {
       orderBy: { createdAt: "desc" },
     });
 
-    if (!myBundle.length)
-      throw new AppError("Anda tidak memiliki paket bundle.", 404);
-
     return {
       total: myBundle.length,
       data: myBundle.map((b) => ({
@@ -120,9 +117,6 @@ class ProviderBundleService {
     });
 
     if (!provider) throw new AppError("Provider tidak ditemukan.", 404);
-    if (!provider.bundles.length)
-      throw new AppError("Provider tidak memiliki paket bundle.", 404);
-
     return {
       total: provider.bundles.length,
       data: provider.bundles.map((b) => ({

@@ -49,6 +49,23 @@ class OrderService {
         );
       }
 
+      const unavailable = await tx.providerAvailability.findFirst({
+        where: {
+          providerId,
+          isAvailable: false,
+          deletedAt: null,
+          startDate: { lte: new Date(eventDateTime) },
+          endDate: { gte: new Date(eventDateTime) },
+        },
+      });
+
+      if (unavailable) {
+        throw new AppError(
+          "Provider tidak tersedia pada tanggal yang dipilih",
+          400
+        );
+      }
+
       let totalPrice = 0;
 
       const order = await tx.order.create({
@@ -204,13 +221,9 @@ class OrderService {
       },
     });
 
-    if (orders.length === 0) {
-      throw new AppError("Belum ada pesanan", 404);
-    }
-
     const formattedOrders = orders.map((o) => formatOrderResponse(o));
 
-    return { data: formattedOrders };
+    return { total: formattedOrders.length, data: formattedOrders };
   }
 
   static async getOrderById(userId, orderId) {
@@ -301,13 +314,9 @@ class OrderService {
       },
     });
 
-    if (orders.length === 0) {
-      throw new AppError("Belum ada pesanan yang dibuat", 404);
-    }
-
     const formattedOrders = orders.map((o) => formatOrderResponse(o));
 
-    return { data: formattedOrders };
+    return { total: formattedOrders.length, data: formattedOrders };
   }
 
   static async getProviderOrders(userId) {
@@ -349,13 +358,9 @@ class OrderService {
       },
     });
 
-    if (orders.length === 0) {
-      throw new AppError("Belum ada pesanan masuk", 404);
-    }
-
     const formattedOrders = orders.map((o) => formatOrderResponse(o));
 
-    return { data: formattedOrders };
+    return { total: formattedOrders.length, data: formattedOrders };
   }
 
   static async updateOrderStatus(orderId, status, userId, userRole) {

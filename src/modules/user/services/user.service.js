@@ -20,10 +20,6 @@ class UserService {
       orderBy: { createdAt: "desc" },
     });
 
-    if (!users || users.length === 0) {
-      throw new AppError("Tidak ada data user yang ditemukan", 404);
-    }
-
     return {
       totalUsers: users.length,
       users: users.map((user) => ({

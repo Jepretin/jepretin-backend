@@ -75,6 +75,20 @@ router.delete(
   ProviderRoleController.removeRole
 );
 
+router.post(
+  "/role",
+  authMiddleware.authenticate,
+  authMiddleware.authorize("ADMIN"),
+  ProviderRoleController.createRole
+);
+
+router.put(
+  "/role/:id",
+  authMiddleware.authenticate,
+  authMiddleware.authorize("ADMIN"),
+  ProviderRoleController.updateRole
+);
+
 //Provider Coverages
 router.post(
   "/coverage",

@@ -43,6 +43,36 @@ class PaymentMethodService {
     });
   }
 
+  static async updatePaymentMethod(id, { name, provider, categoryId }) {
+    const method = await prisma.paymentMethod.findFirst({
+      where: { id, deletedAt: null },
+    });
+    if (!method) throw new AppError("Metode pembayaran tidak ditemukan", 404);
+
+    if (name && categoryId) {
+      const duplicate = await prisma.paymentMethod.findFirst({
+        where: { name, categoryId, deletedAt: null, id: { not: id } },
+      });
+      if (duplicate) throw new AppError("Nama metode sudah ada di kategori ini", 400);
+    }
+
+    if (categoryId) {
+      const category = await prisma.paymentCategory.findUnique({
+        where: { id: categoryId },
+      });
+      if (!category) throw new AppError("Kategori tidak valid", 400);
+    }
+
+    return prisma.paymentMethod.update({
+      where: { id },
+      data: {
+        name: name ?? method.name,
+        provider: provider !== undefined ? provider : method.provider,
+        categoryId: categoryId ?? method.categoryId,
+      },
+    });
+  }
+
   // Soft delete metode pembayaran
   static async removePaymentMethod(id) {
     const method = await prisma.paymentMethod.findUnique({

@@ -97,7 +97,7 @@ class ReviewService {
     });
 
     if (!reviews.length) {
-      throw new AppError("Belum ada review yang diberikan", 404);
+      return { total: 0, data: [] };
     }
 
     return {
@@ -134,12 +134,10 @@ class ReviewService {
     });
 
     if (!reviews.length) {
-      throw new AppError("Belum ada review untuk provider ini", 404);
+      return { total: 0, averageRating: 0, data: [] };
     }
 
-    const averageRating = reviews.length
-      ? (reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length).toFixed(1)
-      : "0";
+    const averageRating = (reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length).toFixed(1);
 
     return {
       total: reviews.length,

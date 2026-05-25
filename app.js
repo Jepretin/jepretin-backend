@@ -2,6 +2,7 @@ const express = require("express");
 const cors = require("cors");
 const dotenv = require("dotenv");
 const morgan = require("morgan");
+const rateLimit = require("express-rate-limit");
 const router = require("./src/routes/route");
 const swaggerUi = require("swagger-ui-express");
 const swaggerDocument = require("./src/docs/swagger.json");
@@ -18,6 +19,20 @@ app.use(
 );
 
 app.use(express.json());
+
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    code: 429,
+    message: "Too many requests, please try again later.",
+    data: { detail: "Rate limit exceeded" },
+  },
+});
+
+app.use("/api", limiter);
 
 // serve swagger UI
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
@@ -44,6 +59,11 @@ app.use((err, req, res, next) => {
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`Halo aku di http://localhost:${PORT}`);
-});
+
+if (require.main === module) {
+  app.listen(PORT, () => {
+    console.log(`Halo aku di http://localhost:${PORT}`);
+  });
+}
+
+module.exports = app;

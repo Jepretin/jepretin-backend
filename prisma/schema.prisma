@@ -27,7 +27,6 @@ model User {
   passwordResets PasswordReset[]
   providers      Provider?
   reviews        Review[]
-  refreshTokens  UserRefreshToken[]
   addresses CustomerAddress[]
 }
 
@@ -446,20 +445,6 @@ model PasswordReset {
   updatedAt  DateTime  @updatedAt
   deletedAt  DateTime?
   user       User      @relation(fields: [userId], references: [id])
-
-  @@index([userId])
-}
-
-model UserRefreshToken {
-  id        String    @id @default(uuid())
-  userId    String
-  token     String
-  expiredAt DateTime
-  revokedAt DateTime?
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  deletedAt DateTime?
-  user      User      @relation(fields: [userId], references: [id])
 
   @@index([userId])
 }
