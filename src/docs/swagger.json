@@ -11,8 +11,8 @@
       "description": "Local"
     },
     {
-      "url": "https://undefensed-misadjusted-venice.ngrok-free.dev/api",
-      "description": "Ngrok"
+      "url": "https://jepretin-backend-production.up.railway.app/api",
+      "description": "Production"
     }
   ],
   "tags": [
@@ -25,15 +25,24 @@
     { "name": "Withdrawal", "description": "Withdrawal/payout management" },
     { "name": "Provider", "description": "Provider registration & management" },
     { "name": "Provider Coverage", "description": "Provider coverage areas" },
-    { "name": "Provider Portfolio", "description": "Provider portfolio management" },
+    {
+      "name": "Provider Portfolio",
+      "description": "Provider portfolio management"
+    },
     { "name": "Provider Bundle", "description": "Service bundle management" },
     { "name": "Provider Topping", "description": "Add-on/topping management" },
-    { "name": "Provider Availability", "description": "Provider availability management" },
+    {
+      "name": "Provider Availability",
+      "description": "Provider availability management"
+    },
     { "name": "Review", "description": "Customer reviews" },
     { "name": "Wilayah", "description": "Indonesia location data" },
     { "name": "Notification", "description": "In-app notifications" },
     { "name": "Like", "description": "Portfolio like/unlike system" },
-    { "name": "Payment Category", "description": "Payment category management" },
+    {
+      "name": "Payment Category",
+      "description": "Payment category management"
+    },
     { "name": "Payment Method", "description": "Payment method management" }
   ],
   "components": {
@@ -50,7 +59,11 @@
         "content": {
           "application/json": {
             "schema": { "$ref": "#/components/schemas/ErrorResponse" },
-            "example": { "code": 401, "message": "Unauthorized", "errors": ["Access token is missing or invalid"] }
+            "example": {
+              "code": 401,
+              "message": "Unauthorized",
+              "errors": ["Access token is missing or invalid"]
+            }
           }
         }
       },
@@ -59,7 +72,11 @@
         "content": {
           "application/json": {
             "schema": { "$ref": "#/components/schemas/ErrorResponse" },
-            "example": { "code": 403, "message": "Forbidden", "errors": ["You do not have permission to perform this action"] }
+            "example": {
+              "code": 403,
+              "message": "Forbidden",
+              "errors": ["You do not have permission to perform this action"]
+            }
           }
         }
       },
@@ -68,7 +85,11 @@
         "content": {
           "application/json": {
             "schema": { "$ref": "#/components/schemas/ErrorResponse" },
-            "example": { "code": 404, "message": "Not Found", "errors": ["The requested resource was not found"] }
+            "example": {
+              "code": 404,
+              "message": "Not Found",
+              "errors": ["The requested resource was not found"]
+            }
           }
         }
       },
@@ -77,7 +98,11 @@
         "content": {
           "application/json": {
             "schema": { "$ref": "#/components/schemas/ErrorResponse" },
-            "example": { "code": 400, "message": "Validation Error", "errors": ["Field 'email' is required"] }
+            "example": {
+              "code": 400,
+              "message": "Validation Error",
+              "errors": ["Field 'email' is required"]
+            }
           }
         }
       },
@@ -86,7 +111,11 @@
         "content": {
           "application/json": {
             "schema": { "$ref": "#/components/schemas/ErrorResponse" },
-            "example": { "code": 500, "message": "Internal Server Error", "errors": ["An unexpected error occurred"] }
+            "example": {
+              "code": 500,
+              "message": "Internal Server Error",
+              "errors": ["An unexpected error occurred"]
+            }
           }
         }
       }
@@ -172,7 +201,11 @@
         "type": "object",
         "properties": {
           "villageId": { "type": "string" },
-          "addressDetail": { "type": "string", "minLength": 5, "maxLength": 255 },
+          "addressDetail": {
+            "type": "string",
+            "minLength": 5,
+            "maxLength": 255
+          },
           "isPrimary": { "type": "boolean", "default": false }
         },
         "required": ["villageId", "addressDetail"]
@@ -181,7 +214,11 @@
         "type": "object",
         "properties": {
           "villageId": { "type": "string" },
-          "addressDetail": { "type": "string", "minLength": 5, "maxLength": 255 },
+          "addressDetail": {
+            "type": "string",
+            "minLength": 5,
+            "maxLength": 255
+          },
           "isPrimary": { "type": "boolean" }
         }
       },
@@ -229,7 +266,16 @@
       },
       "OrderStatus": {
         "type": "string",
-        "enum": ["PENDING", "PAID", "IN_PROGRESS", "WAITING_CONFIRMATION", "COMPLETED", "CANCELLED", "EXPIRED", "REFUNDED"]
+        "enum": [
+          "PENDING",
+          "PAID",
+          "IN_PROGRESS",
+          "WAITING_CONFIRMATION",
+          "COMPLETED",
+          "CANCELLED",
+          "EXPIRED",
+          "REFUNDED"
+        ]
       },
       "OrderUpdateStatus": {
         "type": "object",
@@ -349,7 +395,11 @@
           "snapToken": { "type": "string" },
           "redirectUrl": { "type": "string", "format": "uri" },
           "transactionId": { "type": "string" },
-          "paidAt": { "type": "string", "format": "date-time", "nullable": true },
+          "paidAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
           "createdAt": { "type": "string", "format": "date-time" },
           "updatedAt": { "type": "string", "format": "date-time" }
         }
@@ -374,7 +424,11 @@
           "currentBalance": { "type": "number" },
           "pendingBalance": { "type": "number" },
           "currency": { "type": "string" },
-          "lastPayoutAt": { "type": "string", "format": "date-time", "nullable": true }
+          "lastPayoutAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
         }
       },
 
@@ -384,9 +438,18 @@
           "amount": { "type": "integer", "minimum": 10000 },
           "bankName": { "type": "string", "minLength": 2, "maxLength": 100 },
           "bankAccountNumber": { "type": "string", "pattern": "^[0-9]{5,30}$" },
-          "bankAccountName": { "type": "string", "minLength": 2, "maxLength": 150 }
+          "bankAccountName": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 150
+          }
         },
-        "required": ["amount", "bankName", "bankAccountNumber", "bankAccountName"]
+        "required": [
+          "amount",
+          "bankName",
+          "bankAccountNumber",
+          "bankAccountName"
+        ]
       },
       "WithdrawalApprove": {
         "type": "object",
@@ -418,7 +481,11 @@
           "bankAccountName": { "type": "string" },
           "status": { "$ref": "#/components/schemas/WithdrawalStatus" },
           "note": { "type": "string", "nullable": true },
-          "attemptedAt": { "type": "string", "format": "date-time", "nullable": true },
+          "attemptedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
           "attemptCount": { "type": "integer" },
           "currentBalance": { "type": "number" },
           "pendingBalance": { "type": "number" },
@@ -435,7 +502,11 @@
         "type": "object",
         "properties": {
           "experience": { "type": "string", "format": "uri" },
-          "roles": { "type": "array", "minItems": 1, "items": { "type": "string", "format": "uuid" } }
+          "roles": {
+            "type": "array",
+            "minItems": 1,
+            "items": { "type": "string", "format": "uuid" }
+          }
         },
         "required": ["experience", "roles"]
       },
@@ -514,7 +585,11 @@
       "AddPortfolio": {
         "type": "object",
         "properties": {
-          "media": { "type": "array", "items": { "type": "string", "format": "binary" }, "maxItems": 10 },
+          "media": {
+            "type": "array",
+            "items": { "type": "string", "format": "binary" },
+            "maxItems": 10
+          },
           "mediaType": { "type": "string", "enum": ["image", "video"] },
           "description": { "type": "string", "maxLength": 255 }
         }
@@ -751,7 +826,10 @@
         "type": "object",
         "properties": {
           "id": { "type": "string", "format": "uuid" },
-          "type": { "type": "string", "enum": ["ORDER_STATUS", "PAYMENT", "SYSTEM", "PROMO", "GREETING"] },
+          "type": {
+            "type": "string",
+            "enum": ["ORDER_STATUS", "PAYMENT", "SYSTEM", "PROMO", "GREETING"]
+          },
           "message": { "type": "string" },
           "isRead": { "type": "boolean" },
           "orderId": { "type": "string", "format": "uuid", "nullable": true },
@@ -767,7 +845,10 @@
           "unreadCount": { "type": "integer" },
           "page": { "type": "integer" },
           "limit": { "type": "integer" },
-          "data": { "type": "array", "items": { "$ref": "#/components/schemas/NotificationItem" } }
+          "data": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/NotificationItem" }
+          }
         }
       },
       "UnreadCount": {
@@ -821,7 +902,10 @@
         "type": "object",
         "properties": {
           "total": { "type": "integer" },
-          "data": { "type": "array", "items": { "$ref": "#/components/schemas/MyLikeItem" } }
+          "data": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/MyLikeItem" }
+          }
         }
       },
 
@@ -829,7 +913,10 @@
         "type": "object",
         "properties": {
           "title": { "type": "string" },
-          "type": { "type": "string", "enum": ["ORDER_STATUS", "PAYMENT", "SYSTEM", "PROMO", "GREETING"] },
+          "type": {
+            "type": "string",
+            "enum": ["ORDER_STATUS", "PAYMENT", "SYSTEM", "PROMO", "GREETING"]
+          },
           "message": { "type": "string", "maxLength": 255 }
         },
         "required": ["title", "type", "message"]
@@ -838,7 +925,10 @@
         "type": "object",
         "properties": {
           "title": { "type": "string" },
-          "type": { "type": "string", "enum": ["ORDER_STATUS", "PAYMENT", "SYSTEM", "PROMO", "GREETING"] },
+          "type": {
+            "type": "string",
+            "enum": ["ORDER_STATUS", "PAYMENT", "SYSTEM", "PROMO", "GREETING"]
+          },
           "message": { "type": "string", "maxLength": 255 }
         }
       },
@@ -915,7 +1005,11 @@
             "content": {
               "application/json": {
                 "schema": { "$ref": "#/components/schemas/ErrorResponse" },
-                "example": { "code": 409, "message": "Conflict", "errors": ["Email already registered"] }
+                "example": {
+                  "code": 409,
+                  "message": "Conflict",
+                  "errors": ["Email already registered"]
+                }
               }
             }
           }
@@ -944,7 +1038,10 @@
                   "type": "object",
                   "properties": {
                     "code": { "type": "integer", "example": 200 },
-                    "message": { "type": "string", "example": "Login successful" },
+                    "message": {
+                      "type": "string",
+                      "example": "Login successful"
+                    },
                     "data": {
                       "type": "object",
                       "properties": {
@@ -971,7 +1068,11 @@
             "content": {
               "application/json": {
                 "schema": { "$ref": "#/components/schemas/ErrorResponse" },
-                "example": { "code": 401, "message": "Unauthorized", "errors": ["Invalid email or password"] }
+                "example": {
+                  "code": 401,
+                  "message": "Unauthorized",
+                  "errors": ["Invalid email or password"]
+                }
               }
             }
           }
@@ -1379,8 +1480,14 @@
                         "bundleId": "550e8400-e29b-41d4-a716-446655440002",
                         "quantity": 1,
                         "toppings": [
-                          { "toppingId": "550e8400-e29b-41d4-a716-446655440003", "quantity": 2 },
-                          { "toppingId": "550e8400-e29b-41d4-a716-446655440004", "quantity": 1 }
+                          {
+                            "toppingId": "550e8400-e29b-41d4-a716-446655440003",
+                            "quantity": 2
+                          },
+                          {
+                            "toppingId": "550e8400-e29b-41d4-a716-446655440004",
+                            "quantity": 1
+                          }
                         ]
                       }
                     ]
@@ -1442,7 +1549,10 @@
                   "properties": {
                     "code": { "type": "integer" },
                     "message": { "type": "string" },
-                    "data": { "type": "array", "items": { "$ref": "#/components/schemas/OrderDetail" } }
+                    "data": {
+                      "type": "array",
+                      "items": { "$ref": "#/components/schemas/OrderDetail" }
+                    }
                   }
                 }
               }
@@ -1469,7 +1579,10 @@
                   "properties": {
                     "code": { "type": "integer" },
                     "message": { "type": "string" },
-                    "data": { "type": "array", "items": { "$ref": "#/components/schemas/MyOrderSummary" } }
+                    "data": {
+                      "type": "array",
+                      "items": { "$ref": "#/components/schemas/MyOrderSummary" }
+                    }
                   }
                 }
               }
@@ -1495,7 +1608,10 @@
                   "properties": {
                     "code": { "type": "integer" },
                     "message": { "type": "string" },
-                    "data": { "type": "array", "items": { "$ref": "#/components/schemas/OrderDetail" } }
+                    "data": {
+                      "type": "array",
+                      "items": { "$ref": "#/components/schemas/OrderDetail" }
+                    }
                   }
                 }
               }
@@ -1697,7 +1813,10 @@
                   "properties": {
                     "code": { "type": "integer" },
                     "message": { "type": "string" },
-                    "data": { "type": "array", "items": { "$ref": "#/components/schemas/PaymentDetail" } }
+                    "data": {
+                      "type": "array",
+                      "items": { "$ref": "#/components/schemas/PaymentDetail" }
+                    }
                   }
                 }
               }
@@ -1848,7 +1967,12 @@
                   "properties": {
                     "code": { "type": "integer" },
                     "message": { "type": "string" },
-                    "data": { "type": "array", "items": { "$ref": "#/components/schemas/WithdrawalDetail" } }
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/WithdrawalDetail"
+                      }
+                    }
                   }
                 }
               }
@@ -1875,7 +1999,12 @@
                   "properties": {
                     "code": { "type": "integer" },
                     "message": { "type": "string" },
-                    "data": { "type": "array", "items": { "$ref": "#/components/schemas/WithdrawalDetail" } }
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/WithdrawalDetail"
+                      }
+                    }
                   }
                 }
               }
@@ -2068,7 +2197,12 @@
                   "properties": {
                     "code": { "type": "integer" },
                     "message": { "type": "string" },
-                    "data": { "type": "array", "items": { "$ref": "#/components/schemas/ProviderResponse" } }
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/ProviderResponse"
+                      }
+                    }
                   }
                 }
               }
@@ -2116,7 +2250,9 @@
           "required": true,
           "content": {
             "application/json": {
-              "schema": { "$ref": "#/components/schemas/ProviderUpdateExperience" }
+              "schema": {
+                "$ref": "#/components/schemas/ProviderUpdateExperience"
+              }
             }
           }
         },
@@ -2296,7 +2432,10 @@
                   "properties": {
                     "code": { "type": "integer" },
                     "message": { "type": "string" },
-                    "data": { "type": "array", "items": { "$ref": "#/components/schemas/Coverage" } }
+                    "data": {
+                      "type": "array",
+                      "items": { "$ref": "#/components/schemas/Coverage" }
+                    }
                   }
                 }
               }
@@ -2413,7 +2552,12 @@
                   "properties": {
                     "code": { "type": "integer" },
                     "message": { "type": "string" },
-                    "data": { "type": "array", "items": { "$ref": "#/components/schemas/PortfolioDetail" } }
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/PortfolioDetail"
+                      }
+                    }
                   }
                 }
               }
@@ -2440,7 +2584,12 @@
                   "properties": {
                     "code": { "type": "integer" },
                     "message": { "type": "string" },
-                    "data": { "type": "array", "items": { "$ref": "#/components/schemas/PortfolioDetail" } }
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/PortfolioDetail"
+                      }
+                    }
                   }
                 }
               }
@@ -2474,7 +2623,12 @@
                   "properties": {
                     "code": { "type": "integer" },
                     "message": { "type": "string" },
-                    "data": { "type": "array", "items": { "$ref": "#/components/schemas/PortfolioDetail" } }
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/PortfolioDetail"
+                      }
+                    }
                   }
                 }
               }
@@ -2501,7 +2655,12 @@
                   "properties": {
                     "code": { "type": "integer" },
                     "message": { "type": "string" },
-                    "data": { "type": "array", "items": { "$ref": "#/components/schemas/PortfolioDetail" } }
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/PortfolioDetail"
+                      }
+                    }
                   }
                 }
               }
@@ -2620,7 +2779,10 @@
                   "properties": {
                     "code": { "type": "integer" },
                     "message": { "type": "string" },
-                    "data": { "type": "array", "items": { "$ref": "#/components/schemas/BundleDetail" } }
+                    "data": {
+                      "type": "array",
+                      "items": { "$ref": "#/components/schemas/BundleDetail" }
+                    }
                   }
                 }
               }
@@ -2646,7 +2808,10 @@
                   "properties": {
                     "code": { "type": "integer" },
                     "message": { "type": "string" },
-                    "data": { "type": "array", "items": { "$ref": "#/components/schemas/BundleDetail" } }
+                    "data": {
+                      "type": "array",
+                      "items": { "$ref": "#/components/schemas/BundleDetail" }
+                    }
                   }
                 }
               }
@@ -2680,7 +2845,10 @@
                   "properties": {
                     "code": { "type": "integer" },
                     "message": { "type": "string" },
-                    "data": { "type": "array", "items": { "$ref": "#/components/schemas/BundleDetail" } }
+                    "data": {
+                      "type": "array",
+                      "items": { "$ref": "#/components/schemas/BundleDetail" }
+                    }
                   }
                 }
               }
@@ -2800,7 +2968,10 @@
                   "properties": {
                     "code": { "type": "integer" },
                     "message": { "type": "string" },
-                    "data": { "type": "array", "items": { "$ref": "#/components/schemas/ToppingDetail" } }
+                    "data": {
+                      "type": "array",
+                      "items": { "$ref": "#/components/schemas/ToppingDetail" }
+                    }
                   }
                 }
               }
@@ -2826,7 +2997,10 @@
                   "properties": {
                     "code": { "type": "integer" },
                     "message": { "type": "string" },
-                    "data": { "type": "array", "items": { "$ref": "#/components/schemas/ToppingDetail" } }
+                    "data": {
+                      "type": "array",
+                      "items": { "$ref": "#/components/schemas/ToppingDetail" }
+                    }
                   }
                 }
               }
@@ -2860,7 +3034,10 @@
                   "properties": {
                     "code": { "type": "integer" },
                     "message": { "type": "string" },
-                    "data": { "type": "array", "items": { "$ref": "#/components/schemas/ToppingDetail" } }
+                    "data": {
+                      "type": "array",
+                      "items": { "$ref": "#/components/schemas/ToppingDetail" }
+                    }
                   }
                 }
               }
@@ -2980,7 +3157,12 @@
                   "properties": {
                     "code": { "type": "integer" },
                     "message": { "type": "string" },
-                    "data": { "type": "array", "items": { "$ref": "#/components/schemas/AvailabilityDetail" } }
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/AvailabilityDetail"
+                      }
+                    }
                   }
                 }
               }
@@ -3014,7 +3196,9 @@
                   "properties": {
                     "code": { "type": "integer" },
                     "message": { "type": "string" },
-                    "data": { "$ref": "#/components/schemas/AvailabilityDetail" }
+                    "data": {
+                      "$ref": "#/components/schemas/AvailabilityDetail"
+                    }
                   }
                 }
               }
@@ -3136,7 +3320,10 @@
                   "properties": {
                     "code": { "type": "integer" },
                     "message": { "type": "string" },
-                    "data": { "type": "array", "items": { "$ref": "#/components/schemas/ReviewDetail" } }
+                    "data": {
+                      "type": "array",
+                      "items": { "$ref": "#/components/schemas/ReviewDetail" }
+                    }
                   }
                 }
               }
@@ -3167,7 +3354,12 @@
                       "properties": {
                         "totalReviews": { "type": "integer" },
                         "averageRating": { "type": "number" },
-                        "reviews": { "type": "array", "items": { "$ref": "#/components/schemas/ReviewDetail" } }
+                        "reviews": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/ReviewDetail"
+                          }
+                        }
                       }
                     }
                   }
@@ -3204,7 +3396,9 @@
                   "properties": {
                     "code": { "type": "integer" },
                     "message": { "type": "string" },
-                    "data": { "$ref": "#/components/schemas/ReviewProviderDetail" }
+                    "data": {
+                      "$ref": "#/components/schemas/ReviewProviderDetail"
+                    }
                   }
                 }
               }
@@ -3331,7 +3525,10 @@
                   "properties": {
                     "code": { "type": "integer" },
                     "message": { "type": "string" },
-                    "data": { "type": "array", "items": { "$ref": "#/components/schemas/Province" } }
+                    "data": {
+                      "type": "array",
+                      "items": { "$ref": "#/components/schemas/Province" }
+                    }
                   }
                 }
               }
@@ -3365,7 +3562,10 @@
                   "properties": {
                     "code": { "type": "integer" },
                     "message": { "type": "string" },
-                    "data": { "type": "array", "items": { "$ref": "#/components/schemas/Regency" } }
+                    "data": {
+                      "type": "array",
+                      "items": { "$ref": "#/components/schemas/Regency" }
+                    }
                   }
                 }
               }
@@ -3400,7 +3600,10 @@
                   "properties": {
                     "code": { "type": "integer" },
                     "message": { "type": "string" },
-                    "data": { "type": "array", "items": { "$ref": "#/components/schemas/District" } }
+                    "data": {
+                      "type": "array",
+                      "items": { "$ref": "#/components/schemas/District" }
+                    }
                   }
                 }
               }
@@ -3435,7 +3638,10 @@
                   "properties": {
                     "code": { "type": "integer" },
                     "message": { "type": "string" },
-                    "data": { "type": "array", "items": { "$ref": "#/components/schemas/Village" } }
+                    "data": {
+                      "type": "array",
+                      "items": { "$ref": "#/components/schemas/Village" }
+                    }
                   }
                 }
               }
@@ -3454,15 +3660,30 @@
         "description": "Get paginated notifications for the authenticated user. Query params: page (default 1), limit (default 20). Response includes total, unreadCount, and paginated data.",
         "security": [{ "bearerAuth": [] }],
         "parameters": [
-          { "name": "page", "in": "query", "schema": { "type": "integer", "default": 1 } },
-          { "name": "limit", "in": "query", "schema": { "type": "integer", "default": 20 } }
+          {
+            "name": "page",
+            "in": "query",
+            "schema": { "type": "integer", "default": 1 }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": { "type": "integer", "default": 20 }
+          }
         ],
         "responses": {
           "200": {
             "description": "Notifications retrieved",
             "content": {
               "application/json": {
-                "schema": { "type": "object", "properties": { "code": { "type": "integer" }, "message": { "type": "string" }, "data": { "$ref": "#/components/schemas/NotificationList" } } }
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": { "type": "integer" },
+                    "message": { "type": "string" },
+                    "data": { "$ref": "#/components/schemas/NotificationList" }
+                  }
+                }
               }
             }
           },
@@ -3481,7 +3702,14 @@
             "description": "Unread count",
             "content": {
               "application/json": {
-                "schema": { "type": "object", "properties": { "code": { "type": "integer" }, "message": { "type": "string" }, "data": { "$ref": "#/components/schemas/UnreadCount" } } }
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": { "type": "integer" },
+                    "message": { "type": "string" },
+                    "data": { "$ref": "#/components/schemas/UnreadCount" }
+                  }
+                }
               }
             }
           },
@@ -3496,10 +3724,22 @@
         "description": "Mark a single notification as read",
         "security": [{ "bearerAuth": [] }],
         "parameters": [
-          { "name": "id", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
         ],
         "responses": {
-          "200": { "description": "Notification marked as read", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/SuccessResponse" } } } },
+          "200": {
+            "description": "Notification marked as read",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/SuccessResponse" }
+              }
+            }
+          },
           "401": { "$ref": "#/components/responses/UnauthorizedError" },
           "404": { "$ref": "#/components/responses/NotFoundError" }
         }
@@ -3516,7 +3756,17 @@
             "description": "All marked as read",
             "content": {
               "application/json": {
-                "schema": { "type": "object", "properties": { "code": { "type": "integer" }, "message": { "type": "string" }, "data": { "type": "object", "properties": { "updatedCount": { "type": "integer" } } } } }
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": { "type": "integer" },
+                    "message": { "type": "string" },
+                    "data": {
+                      "type": "object",
+                      "properties": { "updatedCount": { "type": "integer" } }
+                    }
+                  }
+                }
               }
             }
           },
@@ -3544,7 +3794,16 @@
             "description": "Like toggled",
             "content": {
               "application/json": {
-                "schema": { "type": "object", "properties": { "code": { "type": "integer" }, "message": { "type": "string" }, "data": { "$ref": "#/components/schemas/LikeToggleResponse" } } }
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": { "type": "integer" },
+                    "message": { "type": "string" },
+                    "data": {
+                      "$ref": "#/components/schemas/LikeToggleResponse"
+                    }
+                  }
+                }
               }
             }
           },
@@ -3561,14 +3820,26 @@
         "description": "Get the total number of likes for a portfolio",
         "security": [{ "bearerAuth": [] }],
         "parameters": [
-          { "name": "portfolioId", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }
+          {
+            "name": "portfolioId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
         ],
         "responses": {
           "200": {
             "description": "Like count",
             "content": {
               "application/json": {
-                "schema": { "type": "object", "properties": { "code": { "type": "integer" }, "message": { "type": "string" }, "data": { "$ref": "#/components/schemas/LikeCountResponse" } } }
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": { "type": "integer" },
+                    "message": { "type": "string" },
+                    "data": { "$ref": "#/components/schemas/LikeCountResponse" }
+                  }
+                }
               }
             }
           },
@@ -3588,7 +3859,14 @@
             "description": "Liked portfolios",
             "content": {
               "application/json": {
-                "schema": { "type": "object", "properties": { "code": { "type": "integer" }, "message": { "type": "string" }, "data": { "$ref": "#/components/schemas/MyLikeList" } } }
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": { "type": "integer" },
+                    "message": { "type": "string" },
+                    "data": { "$ref": "#/components/schemas/MyLikeList" }
+                  }
+                }
               }
             }
           },
@@ -3619,7 +3897,14 @@
           }
         },
         "responses": {
-          "201": { "description": "Category created", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/SuccessResponse" } } } },
+          "201": {
+            "description": "Category created",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/SuccessResponse" }
+              }
+            }
+          },
           "400": { "$ref": "#/components/responses/ValidationError" },
           "401": { "$ref": "#/components/responses/UnauthorizedError" },
           "403": { "$ref": "#/components/responses/ForbiddenError" }
@@ -3633,7 +3918,18 @@
         "responses": {
           "200": {
             "description": "List of categories",
-            "content": { "application/json": { "schema": { "type": "object", "properties": { "code": { "type": "integer" }, "message": { "type": "string" }, "data": { "type": "array", "items": { "type": "object" } } } } } }
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": { "type": "integer" },
+                    "message": { "type": "string" },
+                    "data": { "type": "array", "items": { "type": "object" } }
+                  }
+                }
+              }
+            }
           },
           "401": { "$ref": "#/components/responses/UnauthorizedError" }
         }
@@ -3646,7 +3942,12 @@
         "description": "Admin: update a payment category name or description",
         "security": [{ "bearerAuth": [] }],
         "parameters": [
-          { "name": "id", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
         ],
         "requestBody": {
           "required": true,
@@ -3657,7 +3958,14 @@
           }
         },
         "responses": {
-          "200": { "description": "Category updated", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/SuccessResponse" } } } },
+          "200": {
+            "description": "Category updated",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/SuccessResponse" }
+              }
+            }
+          },
           "400": { "$ref": "#/components/responses/ValidationError" },
           "401": { "$ref": "#/components/responses/UnauthorizedError" },
           "403": { "$ref": "#/components/responses/ForbiddenError" },
@@ -3670,10 +3978,22 @@
         "description": "Soft delete a payment category by ID",
         "security": [{ "bearerAuth": [] }],
         "parameters": [
-          { "name": "id", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
         ],
         "responses": {
-          "200": { "description": "Category removed", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/SuccessResponse" } } } },
+          "200": {
+            "description": "Category removed",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/SuccessResponse" }
+              }
+            }
+          },
           "401": { "$ref": "#/components/responses/UnauthorizedError" },
           "404": { "$ref": "#/components/responses/NotFoundError" }
         }
@@ -3702,7 +4022,14 @@
           }
         },
         "responses": {
-          "201": { "description": "Method created", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/SuccessResponse" } } } },
+          "201": {
+            "description": "Method created",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/SuccessResponse" }
+              }
+            }
+          },
           "400": { "$ref": "#/components/responses/ValidationError" },
           "401": { "$ref": "#/components/responses/UnauthorizedError" },
           "403": { "$ref": "#/components/responses/ForbiddenError" }
@@ -3716,7 +4043,18 @@
         "responses": {
           "200": {
             "description": "List of methods",
-            "content": { "application/json": { "schema": { "type": "object", "properties": { "code": { "type": "integer" }, "message": { "type": "string" }, "data": { "type": "array", "items": { "type": "object" } } } } } }
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": { "type": "integer" },
+                    "message": { "type": "string" },
+                    "data": { "type": "array", "items": { "type": "object" } }
+                  }
+                }
+              }
+            }
           },
           "401": { "$ref": "#/components/responses/UnauthorizedError" }
         }
@@ -3729,7 +4067,12 @@
         "description": "Admin: update a payment method name, provider, or category",
         "security": [{ "bearerAuth": [] }],
         "parameters": [
-          { "name": "id", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
         ],
         "requestBody": {
           "required": true,
@@ -3740,7 +4083,14 @@
           }
         },
         "responses": {
-          "200": { "description": "Method updated", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/SuccessResponse" } } } },
+          "200": {
+            "description": "Method updated",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/SuccessResponse" }
+              }
+            }
+          },
           "400": { "$ref": "#/components/responses/ValidationError" },
           "401": { "$ref": "#/components/responses/UnauthorizedError" },
           "403": { "$ref": "#/components/responses/ForbiddenError" },
@@ -3753,10 +4103,22 @@
         "description": "Soft delete a payment method by ID",
         "security": [{ "bearerAuth": [] }],
         "parameters": [
-          { "name": "id", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
         ],
         "responses": {
-          "200": { "description": "Method removed", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/SuccessResponse" } } } },
+          "200": {
+            "description": "Method removed",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/SuccessResponse" }
+              }
+            }
+          },
           "401": { "$ref": "#/components/responses/UnauthorizedError" },
           "404": { "$ref": "#/components/responses/NotFoundError" }
         }
@@ -3778,7 +4140,14 @@
           }
         },
         "responses": {
-          "201": { "description": "Template created", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/SuccessResponse" } } } },
+          "201": {
+            "description": "Template created",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/SuccessResponse" }
+              }
+            }
+          },
           "400": { "$ref": "#/components/responses/ValidationError" },
           "401": { "$ref": "#/components/responses/UnauthorizedError" },
           "403": { "$ref": "#/components/responses/ForbiddenError" }
@@ -3790,7 +4159,24 @@
         "description": "Get all active notification templates",
         "security": [{ "bearerAuth": [] }],
         "responses": {
-          "200": { "description": "List of templates", "content": { "application/json": { "schema": { "type": "object", "properties": { "code": { "type": "integer" }, "message": { "type": "string" }, "data": { "type": "array", "items": { "$ref": "#/components/schemas/TemplateDetail" } } } } } } },
+          "200": {
+            "description": "List of templates",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": { "type": "integer" },
+                    "message": { "type": "string" },
+                    "data": {
+                      "type": "array",
+                      "items": { "$ref": "#/components/schemas/TemplateDetail" }
+                    }
+                  }
+                }
+              }
+            }
+          },
           "401": { "$ref": "#/components/responses/UnauthorizedError" }
         }
       }
@@ -3802,10 +4188,29 @@
         "description": "Get a notification template by ID",
         "security": [{ "bearerAuth": [] }],
         "parameters": [
-          { "name": "id", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
         ],
         "responses": {
-          "200": { "description": "Template detail", "content": { "application/json": { "schema": { "type": "object", "properties": { "code": { "type": "integer" }, "message": { "type": "string" }, "data": { "$ref": "#/components/schemas/TemplateDetail" } } } } } },
+          "200": {
+            "description": "Template detail",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": { "type": "integer" },
+                    "message": { "type": "string" },
+                    "data": { "$ref": "#/components/schemas/TemplateDetail" }
+                  }
+                }
+              }
+            }
+          },
           "401": { "$ref": "#/components/responses/UnauthorizedError" },
           "404": { "$ref": "#/components/responses/NotFoundError" }
         }
@@ -3816,7 +4221,12 @@
         "description": "Admin: update a notification template",
         "security": [{ "bearerAuth": [] }],
         "parameters": [
-          { "name": "id", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
         ],
         "requestBody": {
           "required": true,
@@ -3827,7 +4237,14 @@
           }
         },
         "responses": {
-          "200": { "description": "Template updated", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/SuccessResponse" } } } },
+          "200": {
+            "description": "Template updated",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/SuccessResponse" }
+              }
+            }
+          },
           "400": { "$ref": "#/components/responses/ValidationError" },
           "401": { "$ref": "#/components/responses/UnauthorizedError" },
           "403": { "$ref": "#/components/responses/ForbiddenError" },
@@ -3840,10 +4257,22 @@
         "description": "Admin: soft delete a notification template",
         "security": [{ "bearerAuth": [] }],
         "parameters": [
-          { "name": "id", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
         ],
         "responses": {
-          "200": { "description": "Template deleted", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/SuccessResponse" } } } },
+          "200": {
+            "description": "Template deleted",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/SuccessResponse" }
+              }
+            }
+          },
           "401": { "$ref": "#/components/responses/UnauthorizedError" },
           "403": { "$ref": "#/components/responses/ForbiddenError" },
           "404": { "$ref": "#/components/responses/NotFoundError" }
@@ -3866,7 +4295,14 @@
           }
         },
         "responses": {
-          "201": { "description": "Role created", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/SuccessResponse" } } } },
+          "201": {
+            "description": "Role created",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/SuccessResponse" }
+              }
+            }
+          },
           "400": { "$ref": "#/components/responses/ValidationError" },
           "401": { "$ref": "#/components/responses/UnauthorizedError" },
           "403": { "$ref": "#/components/responses/ForbiddenError" }
@@ -3880,7 +4316,12 @@
         "description": "Admin: update a provider role name",
         "security": [{ "bearerAuth": [] }],
         "parameters": [
-          { "name": "id", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
         ],
         "requestBody": {
           "required": true,
@@ -3891,7 +4332,14 @@
           }
         },
         "responses": {
-          "200": { "description": "Role updated", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/SuccessResponse" } } } },
+          "200": {
+            "description": "Role updated",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/SuccessResponse" }
+              }
+            }
+          },
           "400": { "$ref": "#/components/responses/ValidationError" },
           "401": { "$ref": "#/components/responses/UnauthorizedError" },
           "403": { "$ref": "#/components/responses/ForbiddenError" },
