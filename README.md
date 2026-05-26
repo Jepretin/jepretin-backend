@@ -239,31 +239,12 @@ docker exec -it jepretin-api node prisma/seed-wilayah.js
 
 ## 👥 Team
 
-<p align="center">
-  <a href="https://github.com/kevinvinn">
-    <img src="https://github.com/kevinvinn.png" width="80" style="border-radius:50%"><br>
-    <sub><b>Kevin Risky Abadi</b></sub><br>
-    <sub>Backend</sub>
-  </a>
-  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-  <a href="https://github.com/aditaryar">
-    <img src="https://github.com/aditaryar.png" width="80" style="border-radius:50%"><br>
-    <sub><b>Aditya Arya Respati</b></sub><br>
-    <sub>Frontend</sub>
-  </a>
-  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-  <a href="https://github.com/azrmhenn">
-    <img src="https://github.com/azrmhenn.png" width="80" style="border-radius:50%"><br>
-    <sub><b>Azra'i Mahendra</b></sub><br>
-    <sub>Frontend</sub>
-  </a>
-  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-  <a href="https://github.com/mochabdulazis">
-    <img src="https://github.com/mochabdulazis.png" width="80" style="border-radius:50%"><br>
-    <sub><b>Mochamad Abdul Azis</b></sub><br>
-    <sub>DevOps</sub>
-  </a>
-</p>
+| Role | Member | GitHub |
+|------|--------|--------|
+| Backend | Kevin Risky Abadi | [@kevinvinn](https://github.com/kevinvinn) |
+| Frontend | Aditya Arya Respati | [@aditaryar](https://github.com/aditaryar) |
+| Frontend | Azra'i Mahendra | [@azrmhenn](https://github.com/azrmhenn) |
+| DevOps | Mochamad Abdul Azis | [@mochabdulazis](https://github.com/mochabdulazis) |
 
 ---
 
