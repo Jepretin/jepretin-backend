@@ -16,7 +16,7 @@
   <img src="https://img.shields.io/badge/postgresql-16-4169E1?style=flat-square&logo=postgresql&logoColor=white" alt="PostgreSQL 16">
   <img src="https://img.shields.io/badge/jwt-auth-000000?style=flat-square&logo=jsonwebtokens&logoColor=white" alt="JWT Auth">
   <img src="https://img.shields.io/badge/swagger-docs-85EA2D?style=flat-square&logo=swagger&logoColor=black" alt="Swagger Docs">
-  <img src="https://img.shields.io/badge/jest-32%2F38%20pass-C21325?style=flat-square&logo=jest&logoColor=white" alt="JEST Tests">
+  <img src="https://img.shields.io/badge/jest-48%2F48%20pass-C21325?style=flat-square&logo=jest&logoColor=white" alt="JEST Tests">
   <img src="https://img.shields.io/badge/docker-ready-2496ED?style=flat-square&logo=docker&logoColor=white" alt="Docker Ready">
 </p>
 
@@ -46,7 +46,7 @@
 | Upload     | ImageKit + Multer          |
 | Email      | Nodemailer (Gmail)         |
 | Docs       | Swagger UI (OpenAPI 3.0.3) |
-| Container  | Docker + docker-compose    |
+| Container  | Docker (Alpine) + docker-compose |
 | Testing    | JEST + Supertest           |
 
 ---
@@ -82,6 +82,7 @@ MIDTRANS_IS_PRODUCTION=false
 IMAGEKIT_PUBLIC_KEY=your-imagekit-public
 IMAGEKIT_PRIVATE_KEY=your-imagekit-private
 IMAGEKIT_URL_ENDPOINT=https://ik.imagekit.io/your-id
+ALLOWED_ORIGINS=http://localhost:3000,http://localhost:8080
 PORT=3000
 FRONTEND_RESET_PASSWORD_URL=http://localhost:3000/reset-password
 ```
@@ -152,7 +153,8 @@ npm test
 | Auth flow     |   9   | Register, login, logout, OTP, forgot/reset password                  |
 | Critical path |   6   | Order create, status transitions, payment, wallet                    |
 | Webhook       |   5   | Midtrans settlement, cancel, deny, invalid sig, non-existent         |
-| Integration   |  18   | Withdrawal, review, notification, like, availability, template, role |
+| Review        |   8   | Review CRUD, get by provider, order validation                       |
+| Integration   |  20   | Withdrawal, notification, like, availability, template, role         |
 
 ---
 
@@ -170,7 +172,7 @@ https://jepretin-backend-production.up.railway.app/api-docs/       # Production
 | Tags                    |  19   |
 | Paths (endpoint groups) |  84   |
 | Schemas                 |  74   |
-| Total endpoints         | ~100  |
+| Total endpoints         | ~104  |
 
 ---
 
@@ -179,13 +181,14 @@ https://jepretin-backend-production.up.railway.app/api-docs/       # Production
 ```
 src/
 ├── docs/swagger.json           # OpenAPI 3.0.3 documentation
+├── jobs/                       # Cron jobs (TokenBlacklist cleanup)
 ├── libs/nodemailer.js          # Nodemailer singleton
 ├── middlewares/                 # Auth, validation, upload
 ├── modules/
 │   ├── auth/                   # Register, login, logout, OTP, password (7 ep)
-│   ├── user/                   # User CRUD + address CRUD (9 ep)
+│   ├── user/                   # User CRUD + address CRUD + avatar upload (10 ep)
 │   ├── wilayah/                # Province, regency, district, village (4 ep)
-│   ├── provider/               # Core + role + coverage + portfolio + bundle + topping + availability (39 ep)
+│   ├── provider/               # Core + role + coverage + portfolio + bundle + topping + availability + search (40 ep)
 │   ├── order/                  # Order CRUD + status transitions (6 ep)
 │   ├── payment/                # Midtrans Snap + webhook + category + method (12 ep)
 │   ├── wallet/                 # Provider wallet balance (2 ep)
@@ -195,7 +198,7 @@ src/
 │   └── like/                   # Like toggle + count + my-likes (3 ep)
 ├── routes/route.js             # Route aggregator
 ├── services/                   # Prisma & ImageKit singletons
-└── utils/                      # AppError, handleAsync, response helpers
+└── utils/                      # AppError, handleAsync, pagination, response helpers
 ```
 
 ---

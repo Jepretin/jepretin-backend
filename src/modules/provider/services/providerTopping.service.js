@@ -1,5 +1,6 @@
 const prisma = require("../../../services/prisma.service");
 const AppError = require("../../../utils/appError");
+const { parsePagination } = require("../../../utils/pagination");
 
 class ProviderToppingService {
   static async createTopping({
@@ -75,19 +76,25 @@ class ProviderToppingService {
     };
   }
 
-  static async getAllTopping() {
-    const toppings = await prisma.providerTopping.findMany({
-      where: { deletedAt: null },
-      include: {
-        provider: {
-          include: { user: { select: { name: true } } },
-        },
-      },
-      orderBy: { createdAt: "desc" },
-    });
+  static async getAllTopping(query = {}) {
+    const { page, limit, skip } = parsePagination(query);
+    const where = { deletedAt: null };
+
+    const [toppings, total] = await Promise.all([
+      prisma.providerTopping.findMany({
+        where,
+        skip,
+        take: limit,
+        include: { provider: { include: { user: { select: { name: true } } } } },
+        orderBy: { createdAt: "desc" },
+      }),
+      prisma.providerTopping.count({ where }),
+    ]);
 
     return {
-      total: toppings.length,
+      total,
+      page,
+      limit,
       data: toppings.map((t) => ({
         id: t.id,
         providerId: t.provider.id,
@@ -101,24 +108,31 @@ class ProviderToppingService {
     };
   }
 
-  static async getMyTopping(userId) {
+  static async getMyTopping(userId, query = {}) {
     const provider = await prisma.provider.findUnique({
       where: { userId },
       include: { user: true },
     });
-
     if (!provider) throw new AppError("Provider tidak ditemukan.", 404);
 
-    const myTopping = await prisma.providerTopping.findMany({
-      where: { providerId: provider.id, deletedAt: null },
-      include: {
-        provider: { include: { user: { select: { name: true } } } },
-      },
-      orderBy: { createdAt: "desc" },
-    });
+    const { page, limit, skip } = parsePagination(query);
+    const where = { providerId: provider.id, deletedAt: null };
+
+    const [myTopping, total] = await Promise.all([
+      prisma.providerTopping.findMany({
+        where,
+        skip,
+        take: limit,
+        include: { provider: { include: { user: { select: { name: true } } } } },
+        orderBy: { createdAt: "desc" },
+      }),
+      prisma.providerTopping.count({ where }),
+    ]);
 
     return {
-      total: myTopping.length,
+      total,
+      page,
+      limit,
       data: myTopping.map((t) => ({
         id: t.id,
         providerId: t.provider.id,

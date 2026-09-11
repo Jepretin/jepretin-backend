@@ -16,8 +16,13 @@ class ProviderController {
     return success(res, 201, "Provider berhasil diregistrasi.", provider);
   });
 
+  static searchProviders = handleAsync(async (req, res) => {
+    const providers = await ProviderService.searchProviders(req.query);
+    return success(res, 200, "Hasil pencarian provider", providers);
+  });
+
   static getAllProvider = handleAsync(async (req, res) => {
-    const providers = await ProviderService.getAllProvider();
+    const providers = await ProviderService.getAllProvider(req.query);
     return success(res, 200, "Daftar provider berhasil diambil.", providers);
   });
 

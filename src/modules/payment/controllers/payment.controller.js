@@ -30,7 +30,7 @@ class PaymentController {
 
   static getPaymentsByUser = handleAsync(async (req, res) => {
     const userId = req.user.id;
-    const payments = await PaymentService.getPaymentsByUser(userId);
+    const payments = await PaymentService.getPaymentsByUser(userId, req.query);
 
     return success(res, 200, "Daftar pembayaran ditemukan", payments);
   });

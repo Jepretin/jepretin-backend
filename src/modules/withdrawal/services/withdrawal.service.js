@@ -1,5 +1,6 @@
 const prisma = require("../../../services/prisma.service");
 const AppError = require("../../../utils/appError");
+const { parsePagination } = require("../../../utils/pagination");
 
 class WithdrawalService {
   static async requestWithdrawal({
@@ -92,26 +93,28 @@ class WithdrawalService {
     });
   }
 
-  static async getMyRequests(userId) {
-    const provider = await prisma.provider.findUnique({
-      where: { userId },
-    });
+  static async getMyRequests(userId, query = {}) {
+    const provider = await prisma.provider.findUnique({ where: { userId } });
     if (!provider) throw new AppError("Provider tidak ditemukan", 404);
 
-    const requests = await prisma.withdrawalRequest.findMany({
-      where: { providerId: provider.id, deletedAt: null },
-      orderBy: { createdAt: "desc" },
-      include: {
-        wallet: { select: { currentBalance: true, pendingBalance: true } },
-      },
-    });
+    const { page, limit, skip } = parsePagination(query);
+    const where = { providerId: provider.id, deletedAt: null };
 
-    if (!requests.length) {
-      return { total: 0, data: [] };
-    }
+    const [requests, total] = await Promise.all([
+      prisma.withdrawalRequest.findMany({
+        where,
+        orderBy: { createdAt: "desc" },
+        skip,
+        take: limit,
+        include: { wallet: { select: { currentBalance: true, pendingBalance: true } } },
+      }),
+      prisma.withdrawalRequest.count({ where }),
+    ]);
 
     return {
-      total: requests.length,
+      total,
+      page,
+      limit,
       data: requests.map((r) => ({
         id: r.id,
         amount: Number(r.amount),
@@ -128,24 +131,28 @@ class WithdrawalService {
     };
   }
 
-  static async getAllRequests() {
-    const requests = await prisma.withdrawalRequest.findMany({
-      where: { deletedAt: null },
-      orderBy: { createdAt: "desc" },
-      include: {
-        provider: {
-          include: { user: { select: { id: true, name: true, email: true } } },
-        },
-        wallet: { select: { currentBalance: true, pendingBalance: true } },
-      },
-    });
+  static async getAllRequests(query = {}) {
+    const { page, limit, skip } = parsePagination(query);
+    const where = { deletedAt: null };
 
-    if (!requests.length) {
-      return { total: 0, data: [] };
-    }
+    const [requests, total] = await Promise.all([
+      prisma.withdrawalRequest.findMany({
+        where,
+        orderBy: { createdAt: "desc" },
+        skip,
+        take: limit,
+        include: {
+          provider: { include: { user: { select: { id: true, name: true, email: true } } } },
+          wallet: { select: { currentBalance: true, pendingBalance: true } },
+        },
+      }),
+      prisma.withdrawalRequest.count({ where }),
+    ]);
 
     return {
-      total: requests.length,
+      total,
+      page,
+      limit,
       data: requests.map((r) => ({
         id: r.id,
         providerId: r.providerId,

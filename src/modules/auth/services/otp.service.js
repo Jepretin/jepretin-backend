@@ -5,7 +5,7 @@ const prisma = require("../../../services/prisma.service");
 const MailerService = require("../../mailer/mailer.service");
 const AppError = require("../../../utils/appError");
 
-totp.options = { step: 60 }; // OTP berlaku 60 detik
+totp.options = { step: 300 }; // OTP berlaku 5 menit
 
 class OtpService {
   static async generateOtp({
@@ -21,9 +21,9 @@ class OtpService {
       data: {
         userId,
         code: hashedOtp,
-        expiresAt: new Date(Date.now() + 60000), // 60000 = 1 menit
+        expiresAt: new Date(Date.now() + 5 * 60 * 1000), // 5 menit
         requestCount: 1,
-        requestResetAt: new Date(Date.now() + 60000), // 60000 = 1 menit
+        requestResetAt: new Date(Date.now() + 60 * 1000), // 1 menit
         lastRequestedAt: new Date(),
         userAgent: userAgent || null,
       },
@@ -114,7 +114,7 @@ class OtpService {
       where: { userId: user.id },
       update: {
         code: hashedOtp,
-        expiresAt: new Date(Date.now() + 60 * 1000),
+        expiresAt: new Date(Date.now() + 5 * 60 * 1000), // 5 menit
         isUsed: false,
         requestCount,
         requestResetAt,
@@ -124,10 +124,10 @@ class OtpService {
       create: {
         userId: user.id,
         code: hashedOtp,
-        expiresAt: new Date(Date.now() + 60 * 1000),
+        expiresAt: new Date(Date.now() + 5 * 60 * 1000), // 5 menit
         isUsed: false,
         requestCount: 1,
-        requestResetAt: new Date(Date.now() + 60 * 1000),
+        requestResetAt: new Date(Date.now() + 60 * 1000), // 1 menit
         lastRequestedAt: new Date(),
         userAgent: userAgent || null,
       },

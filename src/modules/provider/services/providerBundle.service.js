@@ -1,5 +1,6 @@
 const prisma = require("../../../services/prisma.service");
 const AppError = require("../../../utils/appError");
+const { parsePagination } = require("../../../utils/pagination");
 
 class ProviderBundleService {
   static async createBundle({ userId, name, description, price }) {
@@ -43,21 +44,25 @@ class ProviderBundleService {
     };
   }
 
-  static async getAllBundle() {
-    const bundles = await prisma.providerBundle.findMany({
-      where: { deletedAt: null },
-      include: {
-        provider: {
-          include: {
-            user: { select: { name: true } },
-          },
-        },
-      },
-      orderBy: { createdAt: "desc" },
-    });
+  static async getAllBundle(query = {}) {
+    const { page, limit, skip } = parsePagination(query);
+    const where = { deletedAt: null };
+
+    const [bundles, total] = await Promise.all([
+      prisma.providerBundle.findMany({
+        where,
+        skip,
+        take: limit,
+        include: { provider: { include: { user: { select: { name: true } } } } },
+        orderBy: { createdAt: "desc" },
+      }),
+      prisma.providerBundle.count({ where }),
+    ]);
 
     return {
-      total: bundles.length,
+      total,
+      page,
+      limit,
       data: bundles.map((b) => ({
         id: b.id,
         providerId: b.provider.id,
@@ -70,28 +75,31 @@ class ProviderBundleService {
     };
   }
 
-  static async getMyBundle(userId) {
+  static async getMyBundle(userId, query = {}) {
     const provider = await prisma.provider.findUnique({
       where: { userId },
       include: { user: true },
     });
-
     if (!provider) throw new AppError("Provider tidak ditemukan.", 404);
 
-    const myBundle = await prisma.providerBundle.findMany({
-      where: { providerId: provider.id, deletedAt: null },
-      include: {
-        provider: {
-          include: {
-            user: { select: { name: true } },
-          },
-        },
-      },
-      orderBy: { createdAt: "desc" },
-    });
+    const { page, limit, skip } = parsePagination(query);
+    const where = { providerId: provider.id, deletedAt: null };
+
+    const [myBundle, total] = await Promise.all([
+      prisma.providerBundle.findMany({
+        where,
+        skip,
+        take: limit,
+        include: { provider: { include: { user: { select: { name: true } } } } },
+        orderBy: { createdAt: "desc" },
+      }),
+      prisma.providerBundle.count({ where }),
+    ]);
 
     return {
-      total: myBundle.length,
+      total,
+      page,
+      limit,
       data: myBundle.map((b) => ({
         id: b.id,
         providerId: b.provider.id,

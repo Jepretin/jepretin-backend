@@ -24,7 +24,7 @@ class PasswordService {
 
     await MailerService.sendForgotPasswordEmail(email, resetLink);
 
-    return { resetLink, token };
+    return { message: "Link reset password telah dikirim ke email Anda" };
   }
 
   static async resetPassword({ token, password, confirmPassword }) {

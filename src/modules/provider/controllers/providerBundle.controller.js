@@ -18,7 +18,7 @@ class ProviderBundleController {
   });
 
   static getAllBundle = handleAsync(async (req, res) => {
-    const data = await ProviderBundleService.getAllBundle();
+    const data = await ProviderBundleService.getAllBundle(req.query);
     return success(
       res,
       200,
@@ -29,7 +29,7 @@ class ProviderBundleController {
 
   static getMyBundle = handleAsync(async (req, res) => {
     const userId = req.user.id;
-    const data = await ProviderBundleService.getMyBundle(userId);
+    const data = await ProviderBundleService.getMyBundle(userId, req.query);
     return success(res, 200, "Berhasil mendapatkan bundle milik Anda.", data);
   });
 

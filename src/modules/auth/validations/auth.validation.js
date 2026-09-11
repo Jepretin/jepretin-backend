@@ -5,23 +5,29 @@ class AuthValidation {
     name: Joi.string()
       .pattern(/^[A-Za-z\s]+$/)
       .min(3)
+      .max(100)
       .required()
       .messages({
         "string.base": "Nama harus berupa teks",
         "string.empty": "Nama tidak boleh kosong",
         "string.min": "Nama minimal {#limit} karakter",
+        "string.max": "Nama maksimal {#limit} karakter",
         "string.pattern.base": "Nama hanya boleh mengandung huruf dan spasi",
         "any.required": "Nama wajib diisi",
       }),
-    email: Joi.string().email().required().messages({
+    email: Joi.string().email().max(100).required().messages({
       "string.email": "Email tidak valid",
+      "string.max": "Email maksimal {#limit} karakter",
       "any.required": "Email wajib diisi",
     }),
-    password: Joi.string().min(6).required().messages({
+    password: Joi.string().min(6).max(50).required().messages({
       "string.min": "Password minimal {#limit} karakter",
+      "string.max": "Password maksimal {#limit} karakter",
       "any.required": "Password wajib diisi",
     }),
-    phone: Joi.string().optional(),
+    phone: Joi.string().max(20).optional().messages({
+      "string.max": "Nomor telepon maksimal {#limit} karakter",
+    }),
   });
 
   static resetPassword = Joi.object({

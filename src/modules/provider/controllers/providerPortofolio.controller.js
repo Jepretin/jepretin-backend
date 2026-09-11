@@ -61,7 +61,7 @@ class ProviderPortofolioController {
   });
 
   static getAllPortofolio = handleAsync(async (req, res) => {
-    const portofolios = await providerPortofolioService.getAllPortofolio();
+    const portofolios = await providerPortofolioService.getAllPortofolio(req.query);
     return success(
       res,
       200,
@@ -72,7 +72,7 @@ class ProviderPortofolioController {
 
   static getMyPortofolio = handleAsync(async (req, res) => {
     const userId = req.user.id;
-    const portofolio = await providerPortofolioService.getMyPortofolio(userId);
+    const portofolio = await providerPortofolioService.getMyPortofolio(userId, req.query);
     return success(
       res,
       200,
@@ -97,7 +97,7 @@ class ProviderPortofolioController {
   static getPortofolioByCustomerLocation = handleAsync(async (req, res) => {
     const userId = req.user.id;
     const portfolios =
-      await providerPortofolioService.getPortofolioByCustomerLocation(userId);
+      await providerPortofolioService.getPortofolioByCustomerLocation(userId, req.query);
 
     return success(
       res,

@@ -1,5 +1,6 @@
 const prisma = require("../../../services/prisma.service");
 const AppError = require("../../../utils/appError");
+const { parsePagination } = require("../../../utils/pagination");
 
 class ProviderService {
   static async registerProvider({ userId, experience, roleIds }) {
@@ -98,28 +99,93 @@ class ProviderService {
     });
   }
 
-  static async getAllProvider() {
-    const providers = await prisma.provider.findMany({
-      where: { deletedAt: null },
-      include: {
-        roles: { include: { role: true } },
-        user: true,
-      },
-    });
+  static async searchProviders(query = {}) {
+    const { page, limit, skip } = parsePagination(query);
+    const { roleId, districtId, keyword } = query;
 
-    return (providers || []).map((p) => ({
-      id: p.id,
-      status: p.status,
-      experience: p.experience,
-      name: p.user?.name,
-      email: p.user?.email,
-      phone: p.user?.phone,
-      avatar: p.user?.avatar,
-      roles: p.roles.map((r) => ({
-        id: r.role.id,
-        name: r.role.name,
+    const where = {
+      status: "ACCEPTED",
+      deletedAt: null,
+      user: { isActive: true, deletedAt: null },
+    };
+
+    if (roleId) {
+      where.roles = { some: { roleId, deletedAt: null } };
+    }
+
+    if (districtId) {
+      where.coverages = { some: { districtId, deletedAt: null } };
+    }
+
+    if (keyword) {
+      where.user.name = { contains: keyword, mode: "insensitive" };
+    }
+
+    const [providers, total] = await Promise.all([
+      prisma.provider.findMany({
+        where,
+        skip,
+        take: limit,
+        include: {
+          user: { select: { id: true, name: true, avatar: true } },
+          roles: { include: { role: true } },
+          coverages: { include: { district: true } },
+          portfolios: { where: { deletedAt: null }, take: 5, orderBy: { createdAt: "desc" } },
+        },
+        orderBy: { createdAt: "desc" },
+      }),
+      prisma.provider.count({ where }),
+    ]);
+
+    return {
+      total,
+      page,
+      limit,
+      data: providers.map((p) => ({
+        id: p.id,
+        name: p.user.name,
+        avatar: p.user.avatar,
+        experience: p.experience,
+        roles: p.roles.map((r) => ({ id: r.role.id, name: r.role.name })),
+        coverages: p.coverages.map((c) => ({ id: c.district.id, name: c.district.name })),
+        portfolios: p.portfolios.map((port) => ({
+          id: port.id,
+          mediaUrl: port.mediaUrl,
+          mediaType: port.mediaType,
+        })),
       })),
-    }));
+    };
+  }
+
+  static async getAllProvider(query = {}) {
+    const { page, limit, skip } = parsePagination(query);
+    const where = { deletedAt: null };
+
+    const [providers, total] = await Promise.all([
+      prisma.provider.findMany({
+        where,
+        skip,
+        take: limit,
+        include: { roles: { include: { role: true } }, user: true },
+      }),
+      prisma.provider.count({ where }),
+    ]);
+
+    return {
+      total,
+      page,
+      limit,
+      data: providers.map((p) => ({
+        id: p.id,
+        status: p.status,
+        experience: p.experience,
+        name: p.user?.name,
+        email: p.user?.email,
+        phone: p.user?.phone,
+        avatar: p.user?.avatar,
+        roles: p.roles.map((r) => ({ id: r.role.id, name: r.role.name })),
+      })),
+    };
   }
 
   static async getProviderById(userId) {

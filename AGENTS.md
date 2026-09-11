@@ -1,7 +1,7 @@
 # AGENTS.md — Jepretin Backend
 
 > AI agent context file. Baca ini dulu sebelum bekerja di project ini.
-> Terakhir diperbarui: 2026-05-25 (Final — Production Ready)
+> Terakhir diperbarui: 2026-09-11 (Final — Production Ready)
 
 ---
 
@@ -13,17 +13,18 @@
 | Tipe | Marketplace jasa fotografi, videografi, dan MUA berbasis lokasi |
 | Stack | Node.js + Express 5 + Prisma ORM + PostgreSQL |
 | Auth | JWT + bcrypt + otplib (OTP via email) |
-| Validation | Joi |
-| Payment Gateway | Midtrans Sandbox (Snap Redirect) |
+| Validation | Joi (Strict validation + string limits) |
+| Payment Gateway | Midtrans Sandbox/Production (Snap Redirect) |
 | Media Upload | ImageKit via Multer (memory storage, max 10MB, jpg/png/mp4) |
 | Email | Nodemailer + Gmail |
 | Docs | Swagger UI (`src/docs/swagger.json`), tersedia di `/api-docs` |
 | Entry | `app.js`, port default 3000 |
 | Rate Limiting | 100 req/15 menit per IP via express-rate-limit |
+| Security | Helmet.js + CORS Whitelist (`ALLOWED_ORIGINS` di `.env`) |
 | Container | Dockerfile (Alpine Node 20) |
-| Testing | JEST + Supertest (38 tests, 32 passing) |
-| Total Endpoints | **~100 aktif** |
-| Total Source Files | **89** di `src/` |
+| Testing | JEST + Supertest (48 tests, 48 passing) |
+| Total Endpoints | **~104 aktif** |
+| Total Source Files | **92** di `src/` |
 
 ---
 
@@ -32,24 +33,26 @@
 ```
 src/
 ├── docs/swagger.json              # OpenAPI 3.0.3 — 19 tags, 84 paths, 74 schemas
+├── jobs/                          # Cron jobs
+│   └── cleanup.job.js             # TokenBlacklist cleanup job (berjalan tiap jam)
 ├── libs/nodemailer.js             # Singleton Nodemailer transporter (Gmail)
 ├── middlewares/
 │   ├── authMiddleware.js          # authenticate() + authorize(...roles)
 │   ├── multer.js                  # Upload config (memoryStorage, 10MB limit)
 │   └── validate.js                # Joi validation wrapper → AppError
 ├── modules/
-│   ├── auth/                      # Register, login, logout, OTP, forgot/reset password (7 ep)
+│   ├── auth/                      # Register, login, logout, OTP, forgot/reset password
 │   ├── mailer/                    # Email service (OTP, reset password)
-│   ├── user/                      # User CRUD + address CRUD (9 ep)
-│   ├── wilayah/                   # Province, regency, district, village (4 ep)
-│   ├── provider/                  # Core + role + coverage + portfolio + bundle + topping + availability (39 ep)
-│   ├── order/                     # Order CRUD + status transitions (6 ep)
-│   ├── payment/                   # Midtrans Snap + webhook + category + method (10 active ep)
-│   ├── wallet/                    # Provider wallet balance (2 ep)
-│   ├── withdrawal/                # Withdrawal request + approve/reject (6 ep)
-│   ├── review/                    # Customer review + rating (7 ep)
-│   ├── notification/              # Notification list + read + template CRUD (9 ep)
-│   └── like/                      # Like toggle + count + my-likes (3 ep)
+│   ├── user/                      # User CRUD + address CRUD + avatar upload
+│   ├── wilayah/                   # Province, regency, district, village
+│   ├── provider/                  # Core + role + coverage + portfolio + bundle + topping + availability + search
+│   ├── order/                     # Order CRUD + status transitions + paginations
+│   ├── payment/                   # Midtrans Snap + webhook + category + method
+│   ├── wallet/                    # Provider wallet balance
+│   ├── withdrawal/                # Withdrawal request + approve/reject
+│   ├── review/                    # Customer review + rating
+│   ├── notification/              # Notification list + read + template CRUD
+│   └── like/                      # Like toggle + count + my-likes
 ├── routes/route.js                # Route aggregator — mounts all modules under /api
 ├── services/
 │   ├── prisma.service.js          # Prisma Client singleton
@@ -57,6 +60,7 @@ src/
 └── utils/
     ├── appError.js                # Custom error class (statusCode + message)
     ├── handleAsync.js             # Async error handler wrapper
+    ├── pagination.js              # parsePagination() untuk list endpoints
     └── response.js                # success(res, code, msg, data) + error(res, code, msg, data)
 ```
 
@@ -75,38 +79,45 @@ src/
 - Class-based, static methods
 - Gunakan `prisma.$transaction()` untuk operasi multi-step
 - Throw `AppError(message, statusCode)` untuk error
+- Semua endpoint `GET` yang return list **WAJIB** pakai pagination (`parsePagination`)
 
 ### Validation
 - Semua validasi pakai **Joi**
 - Schema di file `validations/*.validation.js`
 - Diterapkan via middleware `validate()`
+- Semua input string WAJIB memiliki batasan `.max()` (contoh: max 100 untuk nama, 500 untuk URL/desc).
 
 ### Database
 - **Soft delete only** — semua model pakai `deletedAt DateTime?`
 - JANGAN hard delete (`prisma.xxx.delete()`)
 - Semua query lewat Prisma singleton dari `src/services/prisma.service.js`
 
-### Auth
+### Auth & Security
 - JWT payload: `{ id, email, role }` — expire 5 jam
 - `authenticate` → verifikasi token + cek blacklist
 - `authorize(...roles)` → cek role di `req.user.role`
 - Logout → masukkan token ke `TokenBlacklist`
+- ENV wajib akan di-check pada `app.js` sebelum startup
 
 ### API Response Format
 ```json
-// Success:
+// Success (Single/Action):
 { "code": 200, "message": "...", "data": {} }
+
+// Success (List with Pagination):
+{ "code": 200, "message": "...", "data": { "total": 10, "page": 1, "limit": 20, "data": [] } }
+
 // Error:
 { "code": 400, "message": "...", "data": { "detail": "..." } }
 ```
 
 ### Empty List Convention
-- Semua collection endpoint return **200** + `{ total, data: [] }` untuk list kosong
+- Semua collection endpoint return **200** + pagination object kosong untuk list kosong
 - **404 hanya untuk single resource not found** (by ID)
 
 ---
 
-## 4. Seluruh API Endpoint (~100 aktif)
+## 4. Seluruh API Endpoint (~104 aktif)
 
 Base: `/api`
 
@@ -121,12 +132,13 @@ Base: `/api`
 | POST | /auth/forgot-password | None |
 | POST | /auth/reset-password | None |
 
-### User (4 ep) + User Address (5 ep)
+### User (5 ep) + User Address (5 ep)
 | Method | Path | Auth |
 |--------|------|------|
 | GET | /user/all-user | JWT + ADMIN |
 | GET | /user/get-user | JWT |
 | PUT | /user/update-user | JWT |
+| PUT | /user/update-avatar | JWT (multipart) |
 | DELETE | /user/delete-user | JWT |
 | POST | /user/address | JWT |
 | GET | /user/address | JWT |
@@ -142,9 +154,10 @@ Base: `/api`
 | GET | /wilayah/districts/:regencyId | JWT |
 | GET | /wilayah/villages/:districtId | JWT |
 
-### Provider (39 ep)
+### Provider (40 ep)
 | Method | Path | Auth |
 |--------|------|------|
+| GET | /provider/search | JWT (Public Search) |
 | GET | /provider/all-provider | JWT + ADMIN |
 | GET | /provider/get-provider | JWT |
 | POST | /provider/provider | JWT |
@@ -273,37 +286,25 @@ ADMIN: override any status (no restrictions)
 
 ---
 
-## 6. Wallet Credit Flow
+## 6. Notification Automations
 
-Wallet provider dikredit **setelah order COMPLETED** (bukan setelah payment success).
-Logic ada di `order.service.js` → `updateOrderStatus()` — saat status jadi `COMPLETED`, auto credit wallet.
+1. **New Order**: Saat order dibuat, Provider otomatis dikirim notifikasi.
+2. **Order PAID**: Saat Webhook Midtrans merespon `SUCCESS`, status Order update jadi `PAID` dan Customer dikirim notifikasi.
+3. **Order FAILED**: Saat Webhook `FAILED`, Customer dikirim notifikasi.
+4. **Order COMPLETED/CANCELLED**: Saat status order berubah, Provider dikirim notifikasi tambahan sesuai status terbaru.
+5. **Withdrawal**: Approval / Rejection oleh Admin otomatis mengirim notifikasi ke Provider.
 
 ---
 
-## 7. Project Status: What Was Done
+## 7. Project Status: Production Ready 🚀
 
-### Bug Fixes (19 bugs)
-Semua critical bugs fixed: syntax error, import mismatch, hard delete → soft delete, empty list 404 → 200, JWT payload issues, validation mismatch, field reference errors.
-
-### Fitur Baru
-- Withdrawal Module (6 ep)
-- Review Module (7 ep)
-- Provider Availability (5 ep)
-- Notification Endpoints (4 ep)
-- Like System (3 ep)
-- Notification Template CRUD (5 ep)
-- Payment Category & Method Update (2 ep)
-- Role CRUD (2 ep)
-- Payment Webhook fully tested (5/5 pass)
-
-### Infrastructure
-- JEST + Supertest testing (38 tests, 32 passing, 4 suites)
-- Dockerfile (Alpine Node 20)
-- Rate limiting (express-rate-limit: 100 req/15m per IP)
-- Seeder demo data (5 users, 2 providers, 3 orders)
-- Swagger docs (84 paths, 74 schemas, 19 tags)
-- SQL readable views (10 views)
-- Schema migration: WAITING_CONFIRMATION status, UserRefreshToken removed
+Backend sudah mencapai status MVP dan sudah diperkuat untuk standar production:
+- 48 test cases berjalan sukses (100% test pass).
+- CORS Whitelist terpusat.
+- Midtrans Production Flag terverifikasi (env error prevention).
+- Cron Job otomatis untuk cleanup `TokenBlacklist` (setiap jam).
+- Pagination di semua endpoint yang me-return `list/array`.
+- Validasi Input Strict via Joi (`.max` lengths ditambahkan agar tidak ada vulnerability payload bombing).
 
 ---
 
@@ -328,10 +329,11 @@ EMAIL_USER=...@gmail.com
 EMAIL_PASS=...
 MIDTRANS_SERVER_KEY=...
 MIDTRANS_CLIENT_KEY=...
-MIDTRANS_IS_PRODUCTION=false   # Set "true" for production
+MIDTRANS_IS_PRODUCTION=true    # WARNING: if false, will print warning
 IMAGEKIT_PUBLIC_KEY=...
 IMAGEKIT_PRIVATE_KEY=...
 IMAGEKIT_URL_ENDPOINT=https://ik.imagekit.io/...
+ALLOWED_ORIGINS=https://jepretin.com,http://localhost:3000
 PORT=3000
 ```
 

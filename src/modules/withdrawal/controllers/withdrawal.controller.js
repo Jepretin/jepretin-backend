@@ -20,12 +20,12 @@ class WithdrawalController {
 
   static getMyRequests = handleAsync(async (req, res) => {
     const userId = req.user.id;
-    const result = await WithdrawalService.getMyRequests(userId);
+    const result = await WithdrawalService.getMyRequests(userId, req.query);
     return success(res, 200, "Riwayat penarikan berhasil diambil", result);
   });
 
   static getAllRequests = handleAsync(async (req, res) => {
-    const result = await WithdrawalService.getAllRequests();
+    const result = await WithdrawalService.getAllRequests(req.query);
     return success(res, 200, "Semua permintaan penarikan berhasil diambil", result);
   });
 

@@ -1,9 +1,8 @@
 const { api, createTestUserAndToken, registerAndAcceptProvider, cleanup, prisma } = require("./helpers");
 
-describe("Integration: Withdrawal, Review, Notification, Like, Availability, Template", () => {
+describe("Integration: Withdrawal, Notification Template, Like, Availability, Role CRUD", () => {
   let customerToken, providerToken, customerEmail, providerEmail;
   let providerId, orderId;
-  let withdrawalId;
 
   beforeAll(async () => {
     await cleanup();
@@ -57,6 +56,17 @@ describe("Integration: Withdrawal, Review, Notification, Like, Availability, Tem
   // WITHDRAWAL
   // ================================================================
   describe("Withdrawal", () => {
+    let withdrawalId;
+    let adminToken;
+
+    beforeAll(async () => {
+      const admin = await createTestUserAndToken();
+      const adminUser = await prisma.user.findUnique({ where: { email: admin.email } });
+      await prisma.user.update({ where: { id: adminUser.id }, data: { role: "ADMIN" } });
+      const loginRes = await api().post("/api/auth/login").send({ email: admin.email, password: "123456" });
+      adminToken = loginRes.body.data.token;
+    });
+
     test("POST /withdrawal/request — request withdrawal", async () => {
       const res = await api()
         .post("/api/withdrawal/request")
@@ -82,16 +92,38 @@ describe("Integration: Withdrawal, Review, Notification, Like, Availability, Tem
     });
 
     test("PUT /withdrawal/{id}/approve — admin approve", async () => {
+      const res = await api()
+        .put(`/api/withdrawal/${withdrawalId}/approve`)
+        .set("Authorization", `Bearer ${adminToken}`)
+        .send({});
+      expect(res.status).toBe(200);
+    });
+
+    test("GET /withdrawal/all-requests — admin list all", async () => {
+      const res = await api().get("/api/withdrawal/all-requests").set("Authorization", `Bearer ${adminToken}`);
+      expect(res.status).toBe(200);
+    });
+  });
+
+  // ================================================================
+  // NOTIFICATION TEMPLATE
+  // ================================================================
+  describe("Notification Template", () => {
+    let templateId;
+    let adminToken;
+
+    beforeAll(async () => {
       const admin = await createTestUserAndToken();
       const adminUser = await prisma.user.findUnique({ where: { email: admin.email } });
       await prisma.user.update({ where: { id: adminUser.id }, data: { role: "ADMIN" } });
-
       const loginRes = await api().post("/api/auth/login").send({ email: admin.email, password: "123456" });
-      const adminTokenW = loginRes.body.data.token;
+      adminToken = loginRes.body.data.token;
+    });
 
+    test("POST /notification/template — admin create template", async () => {
       const res = await api()
-        .put(`/api/withdrawal/${withdrawalId}/approve`)
-        .set("Authorization", `Bearer ${adminTokenW}`)
+        .post("/api/notification/template")
+        .set("Authorization", `Bearer ${adminToken}`)
         .send({ title: "Test Promo", type: "PROMO", message: "Diskon 50%!" });
       expect(res.status).toBe(201);
       templateId = res.body.data.id;
@@ -222,19 +254,21 @@ describe("Integration: Withdrawal, Review, Notification, Like, Availability, Tem
     });
 
     test("POST /provider/role — admin creates role", async () => {
+      const uniqueName = `Drone Pilot ${Date.now()}`;
       const res = await api()
         .post("/api/provider/role")
         .set("Authorization", `Bearer ${adminToken}`)
-        .send({ name: "Drone Pilot" });
+        .send({ name: uniqueName });
       expect(res.status).toBe(201);
       roleId = res.body.data.id || res.body.data.data?.id;
     });
 
     test("PUT /provider/role/{id} — admin updates role", async () => {
+      const uniqueName = `Aerial Specialist ${Date.now()}`;
       const res = await api()
         .put(`/api/provider/role/${roleId}`)
         .set("Authorization", `Bearer ${adminToken}`)
-        .send({ name: "Aerial Specialist" });
+        .send({ name: uniqueName });
       expect(res.status).toBe(200);
     });
   });

@@ -1,5 +1,6 @@
 const prisma = require("../../../services/prisma.service");
 const AppError = require("../../../utils/appError");
+const { parsePagination } = require("../../../utils/pagination");
 
 class ReviewService {
   static async createReview({ userId, orderId, rating, comment }) {
@@ -81,27 +82,28 @@ class ReviewService {
     });
   }
 
-  static async getMyReviews(userId) {
-    const reviews = await prisma.review.findMany({
-      where: { userId, deletedAt: null },
-      orderBy: { createdAt: "desc" },
-      include: {
-        provider: {
-          select: {
-            id: true,
-            user: { select: { name: true, avatar: true } },
-          },
-        },
-        order: { select: { id: true, status: true, eventDateTime: true } },
-      },
-    });
+  static async getMyReviews(userId, query = {}) {
+    const { page, limit, skip } = parsePagination(query);
+    const where = { userId, deletedAt: null };
 
-    if (!reviews.length) {
-      return { total: 0, data: [] };
-    }
+    const [reviews, total] = await Promise.all([
+      prisma.review.findMany({
+        where,
+        orderBy: { createdAt: "desc" },
+        skip,
+        take: limit,
+        include: {
+          provider: { select: { id: true, user: { select: { name: true, avatar: true } } } },
+          order: { select: { id: true, status: true, eventDateTime: true } },
+        },
+      }),
+      prisma.review.count({ where }),
+    ]);
 
     return {
-      total: reviews.length,
+      total,
+      page,
+      limit,
       data: reviews.map((r) => ({
         id: r.id,
         orderId: r.orderId,

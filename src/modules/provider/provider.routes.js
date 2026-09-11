@@ -18,6 +18,12 @@ const router = express.Router();
 
 // Provider
 router.get(
+  "/search",
+  authMiddleware.authenticate,
+  ProviderController.searchProviders
+);
+
+router.get(
   "/all-provider",
   authMiddleware.authenticate,
   authMiddleware.authorize("ADMIN"),

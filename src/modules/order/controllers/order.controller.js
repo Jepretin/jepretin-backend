@@ -19,7 +19,7 @@ class OrderController {
   });
 
   static getAllOrder = handleAsync(async (req, res) => {
-    const order = await OrderService.getAllOrder();
+    const order = await OrderService.getAllOrder(req.query);
     return success(res, 200, "Daftar Order berhasil diambil.", order);
   });
 
@@ -32,13 +32,13 @@ class OrderController {
 
   static getMyOrders = handleAsync(async (req, res) => {
     const userId = req.user.id;
-    const result = await OrderService.getMyOrders(userId);
+    const result = await OrderService.getMyOrders(userId, req.query);
     return success(res, 200, "Daftar pesanan berhasil diambil", result);
   });
 
   static getProviderOrders = handleAsync(async (req, res) => {
     const userId = req.user.id;
-    const result = await OrderService.getProviderOrders(userId);
+    const result = await OrderService.getProviderOrders(userId, req.query);
     return success(res, 200, "Daftar pesanan masuk berhasil diambil", result);
   });
 

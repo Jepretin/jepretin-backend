@@ -5,6 +5,7 @@ const UserValidation = require("./validations/user.validation");
 const UserAddressValidation = require("./validations/userAddress.validation");
 const authMiddleware = require("../../middlewares/authMiddleware");
 const validate = require("../../middlewares/validate");
+const upload = require("../../middlewares/multer");
 const router = express.Router();
 
 // Semua endpoint user harus login dulu
@@ -24,6 +25,12 @@ router.put(
   authMiddleware.authenticate,
   validate(UserValidation.updateUser),
   UserController.editUser
+);
+router.put(
+  "/update-avatar",
+  authMiddleware.authenticate,
+  upload.single("avatar"),
+  UserController.updateAvatar
 );
 router.delete(
   "/delete-user",

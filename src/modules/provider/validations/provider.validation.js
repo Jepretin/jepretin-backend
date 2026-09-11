@@ -4,8 +4,9 @@ class ProviderValidation {
   // Register provider
   static register() {
     return Joi.object({
-      experience: Joi.string().uri().required().messages({
+      experience: Joi.string().uri().max(500).required().messages({
         "string.base": "Experience harus berupa string",
+        "string.max": "URL Experience maksimal {#limit} karakter",
         "string.uri":
           "Experience harus berupa link yang valid (contoh: Google Drive, ImageKit, dll).",
         "any.required": "Experience wajib diisi",
@@ -21,8 +22,9 @@ class ProviderValidation {
   // Update hanya experience (dipakai provider jika REJECTED)
   static updateExperience() {
     return Joi.object({
-      experience: Joi.string().uri().required().messages({
+      experience: Joi.string().uri().max(500).required().messages({
         "string.base": "Experience harus berupa string",
+        "string.max": "URL Experience maksimal {#limit} karakter",
         "string.uri":
           "Experience harus berupa link yang valid (contoh: Google Drive, ImageKit, dll).",
         "any.required": "Experience wajib diisi",

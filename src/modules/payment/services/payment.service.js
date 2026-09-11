@@ -2,6 +2,7 @@ const prisma = require("../../../services/prisma.service");
 const AppError = require("../../../utils/appError");
 const midtransClient = require("midtrans-client");
 const crypto = require("crypto");
+const { parsePagination } = require("../../../utils/pagination");
 
 class PaymentService {
   static async createPayment({ userId, orderId }) {
@@ -150,38 +151,63 @@ class PaymentService {
       },
     });
 
-    // Jika SUCCESS, update status order juga
+    // Jika SUCCESS, update status order dan kirim notifikasi
     if (newStatus === "SUCCESS") {
       await prisma.order.update({
         where: { id: payment.orderId },
         data: { status: "PAID" },
+      });
+
+      if (payment.order?.userId) {
+        await prisma.notification.create({
+          data: {
+            userId: payment.order.userId,
+            orderId: payment.orderId,
+            type: "PAYMENT",
+            message: `Pembayaran sebesar Rp ${Number(payment.amount).toLocaleString("id-ID")} berhasil. Pesanan Anda sedang diproses.`,
+            isRead: false,
+          },
+        });
+      }
+    }
+
+    if (newStatus === "FAILED" && payment.order?.userId) {
+      await prisma.notification.create({
+        data: {
+          userId: payment.order.userId,
+          orderId: payment.orderId,
+          type: "PAYMENT",
+          message: `Pembayaran gagal. Silakan coba kembali atau hubungi layanan pelanggan.`,
+          isRead: false,
+        },
       });
     }
 
     return { message: "Webhook diterima dan diproses", status: newStatus };
   }
 
-  static async getPaymentsByUser(userId) {
+  static async getPaymentsByUser(userId, query = {}) {
     return await prisma.$transaction(async (tx) => {
-      const payments = await tx.payment.findMany({
-        where: {
-          deletedAt: null,
-          order: {
-            userId,
-            deletedAt: null,
-          },
-        },
-        include: {
-          order: {
-            select: {
-              status: true,
-              totalPrice: true,
-              createdAt: true,
+      const { page, limit, skip } = parsePagination(query);
+      const where = {
+        deletedAt: null,
+        order: { userId, deletedAt: null },
+      };
+
+      const [payments, total] = await Promise.all([
+        tx.payment.findMany({
+          where,
+          skip,
+          take: limit,
+          include: {
+            order: {
+              select: { status: true, totalPrice: true, createdAt: true },
             },
           },
-        },
-        orderBy: { createdAt: "desc" },
-      });
+          orderBy: { createdAt: "desc" },
+        }),
+        tx.payment.count({ where }),
+      ]);
 
       const formatted = payments.map((p) => ({
         id: p.id,
@@ -200,7 +226,7 @@ class PaymentService {
           : null,
       }));
 
-      return formatted;
+      return { total, page, limit, data: formatted };
     });
   }
 

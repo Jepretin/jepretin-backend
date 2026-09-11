@@ -1,5 +1,6 @@
 const prisma = require("../../../services/prisma.service");
 const AppError = require("../../../utils/appError");
+const { parsePagination } = require("../../../utils/pagination");
 
 class ProviderPortofolioService {
   //  Untuk menambah portofolio baru
@@ -50,21 +51,31 @@ class ProviderPortofolioService {
   }
 
   // Untuk mendapatkan semua portofolio (admin only)
-  static async getAllPortofolio() {
-    const portofolios = await prisma.providerPortfolio.findMany({
-      where: { deletedAt: null },
-      include: {
-        provider: {
-          include: {
-            user: { select: { name: true, avatar: true } },
+  static async getAllPortofolio(query = {}) {
+    const { page, limit, skip } = parsePagination(query);
+    const where = { deletedAt: null };
+
+    const [portofolios, total] = await Promise.all([
+      prisma.providerPortfolio.findMany({
+        where,
+        skip,
+        take: limit,
+        include: {
+          provider: {
+            include: {
+              user: { select: { name: true, avatar: true } },
+            },
           },
         },
-      },
-      orderBy: { createdAt: "desc" },
-    });
+        orderBy: { createdAt: "desc" },
+      }),
+      prisma.providerPortfolio.count({ where }),
+    ]);
 
     return {
-      total: portofolios.length,
+      total,
+      page,
+      limit,
       data: portofolios.map((p) => ({
         id: p.id,
         providerId: p.provider.id,
@@ -79,20 +90,30 @@ class ProviderPortofolioService {
   }
 
   // Untuk mendapatkan portofolio milik provider yang login
-  static async getMyPortofolio(userId) {
+  static async getMyPortofolio(userId, query = {}) {
     const provider = await prisma.provider.findUnique({
       where: { userId },
       include: { user: true },
     });
     if (!provider) throw new AppError("Provider tidak ditemukan.", 404);
 
-    const portofolios = await prisma.providerPortfolio.findMany({
-      where: { providerId: provider.id, deletedAt: null },
-      orderBy: { createdAt: "desc" },
-    });
+    const { page, limit, skip } = parsePagination(query);
+    const where = { providerId: provider.id, deletedAt: null };
+
+    const [portofolios, total] = await Promise.all([
+      prisma.providerPortfolio.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: { createdAt: "desc" },
+      }),
+      prisma.providerPortfolio.count({ where }),
+    ]);
 
     return {
-      total: portofolios.length,
+      total,
+      page,
+      limit,
       data: portofolios.map((p) => ({
         id: p.id,
         providerId: provider.id,
@@ -142,7 +163,7 @@ class ProviderPortofolioService {
   }
 
   // Untuk Ambil portofolio provider berdasarkan lokasi customer
-  static async getPortofolioByCustomerLocation(userId) {
+  static async getPortofolioByCustomerLocation(userId, query = {}) {
     const address = await prisma.customerAddress.findFirst({
       where: { userId, isPrimary: true, deletedAt: null },
       include: { village: { include: { district: true } } },
@@ -151,30 +172,38 @@ class ProviderPortofolioService {
     if (!address)
       throw new AppError("Alamat utama pelanggan tidak ditemukan.", 404);
 
-    const providers = await prisma.provider.findMany({
-      where: {
-        coverages: {
-          some: { districtId: address.village.district.id },
-        },
-        deletedAt: null,
-      },
-      include: {
-        user: { select: { name: true, avatar: true } },
-        portfolios: {
-          where: { deletedAt: null },
-          orderBy: { createdAt: "desc" },
-        },
-      },
-    });
+    const { page, limit, skip } = parsePagination(query);
 
-    if (!providers.length)
-      throw new AppError(
-        "Tidak ditemukan portofolio provider di lokasi Anda.",
-        404
-      );
+    const where = {
+      coverages: { some: { districtId: address.village.district.id } },
+      deletedAt: null,
+    };
+
+    const [providers, totalProviders] = await Promise.all([
+      prisma.provider.findMany({
+        where,
+        skip,
+        take: limit,
+        include: {
+          user: { select: { name: true, avatar: true } },
+          portfolios: {
+            where: { deletedAt: null },
+            orderBy: { createdAt: "desc" },
+            take: 10, // batasi jumlah portfolio per provider (preview)
+          },
+        },
+      }),
+      prisma.provider.count({ where }),
+    ]);
+
+    if (!providers.length) {
+      return { totalProviders: 0, page, limit, providers: [] };
+    }
 
     return {
-      totalProviders: providers.length,
+      totalProviders,
+      page,
+      limit,
       providers: providers.map((p) => ({
         providerId: p.id,
         providerName: p.user.name,

@@ -1,5 +1,21 @@
 node_modules
-# Keep environment variables out of version control
+
+# Environment variables — JANGAN commit ke git
 .env
+.env.test
+.env.local
+.env.production
 
 /generated/prisma
+
+# Build artifacts
+dist/
+build/
+
+# Logs
+*.log
+logs/
+
+# OS artifacts
+.DS_Store
+Thumbs.db

@@ -1,27 +1,29 @@
 const prisma = require("../../../services/prisma.service");
 const bcrypt = require("bcrypt");
 const AppError = require("../../../utils/appError");
+const { parsePagination } = require("../../../utils/pagination");
 
 class UserService {
   //Untuk mengambil semua user (Admin Only)
-  static async getAllUsers() {
-    const users = await prisma.user.findMany({
-      where: { deletedAt: null },
-      select: {
-        id: true,
-        name: true,
-        role: true,
-        email: true,
-        phone: true,
-        avatar: true,
-        isActive: true,
-        createdAt: true,
-      },
-      orderBy: { createdAt: "desc" },
-    });
+  static async getAllUsers(query = {}) {
+    const { page, limit, skip } = parsePagination(query);
+    const where = { deletedAt: null };
+
+    const [users, total] = await Promise.all([
+      prisma.user.findMany({
+        where,
+        select: { id: true, name: true, role: true, email: true, phone: true, avatar: true, isActive: true, createdAt: true },
+        orderBy: { createdAt: "desc" },
+        skip,
+        take: limit,
+      }),
+      prisma.user.count({ where }),
+    ]);
 
     return {
-      totalUsers: users.length,
+      total,
+      page,
+      limit,
       users: users.map((user) => ({
         id: user.id,
         name: user.name,
@@ -115,6 +117,22 @@ class UserService {
       if (error instanceof AppError) throw error;
       throw new AppError("Terjadi kesalahan saat memperbarui user", 500);
     }
+  }
+
+  // Untuk memperbarui avatar
+  static async updateAvatar(userId, avatarUrl) {
+    const updatedUser = await prisma.user.update({
+      where: { id: userId },
+      data: { avatar: avatarUrl },
+      select: {
+        id: true,
+        name: true,
+        avatar: true,
+        updatedAt: true,
+      },
+    });
+
+    return updatedUser;
   }
 
   // Untuk menghapus user (Soft Delete)

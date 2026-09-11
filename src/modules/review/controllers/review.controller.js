@@ -19,7 +19,7 @@ class ReviewController {
 
   static getMyReviews = handleAsync(async (req, res) => {
     const userId = req.user.id;
-    const result = await ReviewService.getMyReviews(userId);
+    const result = await ReviewService.getMyReviews(userId, req.query);
     return success(res, 200, "Review berhasil diambil", result);
   });
 

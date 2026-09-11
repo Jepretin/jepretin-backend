@@ -1,6 +1,7 @@
 const prisma = require("../../../services/prisma.service");
 const AppError = require("../../../utils/appError");
 const { formatOrderResponse } = require("../helpers/order.helper");
+const { parsePagination } = require("../../../utils/pagination");
 
 class OrderService {
   static async addOrder({
@@ -158,6 +159,7 @@ class OrderService {
           provider: {
             select: {
               id: true,
+              userId: true,
               user: { select: { name: true } },
             },
           },
@@ -183,47 +185,42 @@ class OrderService {
         },
       });
 
+      await tx.notification.create({
+        data: {
+          userId: updatedOrder.provider.userId,
+          orderId: updatedOrder.id,
+          type: "ORDER_STATUS",
+          message: `Ada pesanan baru dari ${updatedOrder.user.name} senilai Rp ${Number(totalPrice).toLocaleString("id-ID")}`,
+          isRead: false,
+        },
+      });
+
       return { data: formatOrderResponse(updatedOrder) };
     });
   }
 
-  static async getAllOrder() {
-    const orders = await prisma.order.findMany({
-      where: { deletedAt: null },
-      orderBy: { createdAt: "desc" },
-      include: {
-        user: { select: { id: true, name: true } },
-        provider: {
-          select: {
-            id: true,
-            user: { select: { name: true } },
-          },
-        },
-        customerAddress: {
-          include: {
-            village: {
-              include: {
-                district: {
-                  include: {
-                    regency: { include: { province: true } },
-                  },
-                },
-              },
-            },
-          },
-        },
-        orderItems: {
-          include: {
-            bundle: true,
-            orderItemToppings: { include: { topping: true } },
+  static async getAllOrder(query = {}) {
+    const { page, limit, skip } = parsePagination(query);
+    const where = { deletedAt: null };
+    const include = {
+      user: { select: { id: true, name: true } },
+      provider: { select: { id: true, user: { select: { name: true } } } },
+      customerAddress: {
+        include: {
+          village: {
+            include: { district: { include: { regency: { include: { province: true } } } } },
           },
         },
       },
-    });
+      orderItems: { include: { bundle: true, orderItemToppings: { include: { topping: true } } } },
+    };
 
-    const formattedOrders = orders.map((o) => formatOrderResponse(o));
+    const [orders, total] = await Promise.all([
+      prisma.order.findMany({ where, orderBy: { createdAt: "desc" }, skip, take: limit, include }),
+      prisma.order.count({ where }),
+    ]);
 
-    return { total: formattedOrders.length, data: formattedOrders };
+    return { total, page, limit, data: orders.map((o) => formatOrderResponse(o)) };
   }
 
   static async getOrderById(userId, orderId) {
@@ -280,87 +277,55 @@ class OrderService {
     return { data: formatOrderResponse(order) };
   }
 
-  static async getMyOrders(userId) {
-    const orders = await prisma.order.findMany({
-      where: { userId, deletedAt: null },
-      orderBy: { createdAt: "desc" },
-      include: {
-        user: { select: { id: true, name: true } },
-        provider: {
-          select: {
-            id: true,
-            user: { select: { name: true } },
-          },
-        },
-        customerAddress: {
-          include: {
-            village: {
-              include: {
-                district: {
-                  include: {
-                    regency: { include: { province: true } },
-                  },
-                },
-              },
-            },
-          },
-        },
-        orderItems: {
-          include: {
-            bundle: true,
-            orderItemToppings: { include: { topping: true } },
+  static async getMyOrders(userId, query = {}) {
+    const { page, limit, skip } = parsePagination(query);
+    const where = { userId, deletedAt: null };
+    const include = {
+      user: { select: { id: true, name: true } },
+      provider: { select: { id: true, user: { select: { name: true } } } },
+      customerAddress: {
+        include: {
+          village: {
+            include: { district: { include: { regency: { include: { province: true } } } } },
           },
         },
       },
-    });
+      orderItems: { include: { bundle: true, orderItemToppings: { include: { topping: true } } } },
+    };
 
-    const formattedOrders = orders.map((o) => formatOrderResponse(o));
+    const [orders, total] = await Promise.all([
+      prisma.order.findMany({ where, orderBy: { createdAt: "desc" }, skip, take: limit, include }),
+      prisma.order.count({ where }),
+    ]);
 
-    return { total: formattedOrders.length, data: formattedOrders };
+    return { total, page, limit, data: orders.map((o) => formatOrderResponse(o)) };
   }
 
-  static async getProviderOrders(userId) {
-    const provider = await prisma.provider.findUnique({
-      where: { userId },
-    });
+  static async getProviderOrders(userId, query = {}) {
+    const provider = await prisma.provider.findUnique({ where: { userId } });
     if (!provider) throw new AppError("Provider tidak ditemukan", 404);
 
-    const orders = await prisma.order.findMany({
-      where: { providerId: provider.id, deletedAt: null },
-      orderBy: { createdAt: "desc" },
-      include: {
-        user: { select: { id: true, name: true } },
-        provider: {
-          select: {
-            id: true,
-            user: { select: { name: true } },
-          },
-        },
-        customerAddress: {
-          include: {
-            village: {
-              include: {
-                district: {
-                  include: {
-                    regency: { include: { province: true } },
-                  },
-                },
-              },
-            },
-          },
-        },
-        orderItems: {
-          include: {
-            bundle: true,
-            orderItemToppings: { include: { topping: true } },
+    const { page, limit, skip } = parsePagination(query);
+    const where = { providerId: provider.id, deletedAt: null };
+    const include = {
+      user: { select: { id: true, name: true } },
+      provider: { select: { id: true, user: { select: { name: true } } } },
+      customerAddress: {
+        include: {
+          village: {
+            include: { district: { include: { regency: { include: { province: true } } } } },
           },
         },
       },
-    });
+      orderItems: { include: { bundle: true, orderItemToppings: { include: { topping: true } } } },
+    };
 
-    const formattedOrders = orders.map((o) => formatOrderResponse(o));
+    const [orders, total] = await Promise.all([
+      prisma.order.findMany({ where, orderBy: { createdAt: "desc" }, skip, take: limit, include }),
+      prisma.order.count({ where }),
+    ]);
 
-    return { total: formattedOrders.length, data: formattedOrders };
+    return { total, page, limit, data: orders.map((o) => formatOrderResponse(o)) };
   }
 
   static async updateOrderStatus(orderId, status, userId, userRole) {
@@ -426,6 +391,7 @@ class OrderService {
           provider: {
             select: {
               id: true,
+              userId: true,
               user: { select: { name: true } },
             },
           },
@@ -459,6 +425,23 @@ class OrderService {
           isRead: false,
         },
       });
+
+      const providerStatusMessages = {
+        CANCELLED: "Pesanan telah dibatalkan oleh customer",
+        COMPLETED: `Pesanan selesai! Dana akan dikreditkan ke wallet Anda`,
+      };
+
+      if (providerStatusMessages[status]) {
+        await tx.notification.create({
+          data: {
+            userId: order.provider.userId,
+            orderId: order.id,
+            type: "ORDER_STATUS",
+            message: providerStatusMessages[status],
+            isRead: false,
+          },
+        });
+      }
 
       if (status === "COMPLETED") {
         const wallet = await tx.wallet.findFirst({

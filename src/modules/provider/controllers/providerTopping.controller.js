@@ -20,7 +20,7 @@ class ProviderToppingController {
   });
 
   static getAllTopping = handleAsync(async (req, res) => {
-    const data = await ProviderToppingService.getAllTopping();
+    const data = await ProviderToppingService.getAllTopping(req.query);
     return success(
       res,
       200,
@@ -31,7 +31,7 @@ class ProviderToppingController {
 
   static getMyTopping = handleAsync(async (req, res) => {
     const userId = req.user.id;
-    const data = await ProviderToppingService.getMyTopping(userId);
+    const data = await ProviderToppingService.getMyTopping(userId, req.query);
     return success(res, 200, "Berhasil mendapatkan Topping milik Anda.", data);
   });
 
